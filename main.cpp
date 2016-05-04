@@ -11,6 +11,9 @@
 
 using namespace std;
 
+/* -------------------------------------------------------------------------
+ * Main thread
+ * ------------------------------------------------------------------------- */
 int main(int argc, char *argv[])
 {
   int sock, csock;
@@ -37,29 +40,26 @@ int main(int argc, char *argv[])
     exit(EXIT_FAILURE);
   }
 
-  cout << "Listening..." << endl;
-  if (listen(sock, SOMAXCONN) != 0) {
-    perror("listen");
-    exit(EXIT_FAILURE);
-  }
+  // Listen for new connections
+  while(true) {
 
-  if ((csock = accept(sock, NULL, NULL)) == -1) {
-    perror("accept");
-    exit(EXIT_FAILURE);
-  }
-  cout << "Connection accepted." << endl;
+	  cout << "Listening..." << endl;
+	  if (listen(sock, SOMAXCONN) != 0) {
+	    perror("listen");
+	    exit(EXIT_FAILURE);
+	  }
 
-  string MSG = "";
+	  if ((csock = accept(sock, NULL, NULL)) == -1) {
+	    perror("accept");
+	    exit(EXIT_FAILURE);
+	  }
+	  cout << "New connection accepted. Creating client thread..." << endl;
 
-  while(MSG != "$")
-  {
-	cout << "Type message (type $ to disconnect): ";
-	getline(cin, MSG);
-	int amt = send(csock, MSG.c_str(), MSG.size(), 0);
-  	printf("%d bytes sent!\n", amt);
+	  // Create new clients thread passing clientSocket as a parameter
+	  // ...
   }
-  close(csock);
 
   close(sock);
+
   return EXIT_SUCCESS;
 }
