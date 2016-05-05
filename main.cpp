@@ -121,6 +121,12 @@ int main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
+	int enable = 1;
+	if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0) {
+	    perror("setsockopt(SO_REUSEADDR) failed");
+		exit(EXIT_FAILURE);
+	}
+
 	sin.sin_family = AF_INET;
 	sin.sin_port = htons(port);
 	if (inet_pton(AF_INET, host, &sin.sin_addr) != 1) {
