@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <pthread.h>
+#include <stdio.h>
 
 #include <iostream>
 
@@ -51,9 +52,18 @@ void add_client(client_t *new_client)
 
 void *receiverThread(void *args)
 {
+	char msg[1000];
+	size_t msg_len;
+	client_t *client = (client_t*) args;
+
 	while(true) {
-		cout << "receiver thread..." << endl;
-		sleep(2);
+		msg_len = read(client->socket, msg, 1000);
+		if(msg_len < 1000) {
+			msg[msg_len] = 0;
+		} else {
+			msg[999] = 0;
+		}
+		printf("%s", msg);
 	}
 
 	return NULL;
@@ -61,10 +71,15 @@ void *receiverThread(void *args)
 
 void *transmitterThread(void *args)
 {
+	size_t buf_size = 1000;
+	char *buf;
+	client_t *client = (client_t*) args;
+
+	buf = (char*)malloc(sizeof(char)*buf_size);
+
 	while(true) {
-		sleep(1);
-		cout << "transmitter thread..." << endl;
-		sleep(1);
+		getline(&buf, &buf_size, stdin);
+		write(client->socket, buf, strlen(buf));
 	}
 
 	return NULL;
@@ -160,8 +175,8 @@ int main(int argc, char *argv[])
 				pthread_attr_init(&new_client->receiverThreadAttr);
 				pthread_attr_init(&new_client->transmitterThreadAttr);
 
-				pthread_create(&new_client->receiverThd, &new_client->receiverThreadAttr, receiverThread, (void *)NULL);
-				pthread_create(&new_client->transmitterThd, &new_client->transmitterThreadAttr, transmitterThread, (void *)NULL);
+				pthread_create(&new_client->receiverThd, &new_client->receiverThreadAttr, receiverThread, (void *)new_client);
+				pthread_create(&new_client->transmitterThd, &new_client->transmitterThreadAttr, transmitterThread, (void *)new_client);
 
 				add_client(new_client);
 			}
