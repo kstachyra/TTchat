@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
+#include <pthread.h>
 
 #include <iostream>
 
@@ -22,6 +23,51 @@ static volatile int exit_request = 0;
 static void signal_handler(int sig)
 {
 	exit_request = 1;
+}
+
+typedef struct client {
+	int socket;
+	pthread_t receiverThd;
+	pthread_t transmitterThd;
+	pthread_attr_t receiverThreadAttr;
+	pthread_attr_t transmitterThreadAttr;
+	struct client *next;
+} client_t;
+
+client_t *client_list_head = NULL;
+
+void add_client(client_t *new_client)
+{
+	client_t *current;
+
+	if(client_list_head == NULL) {
+		client_list_head = new_client;
+	} else {
+		current = client_list_head;
+		while(current->next != NULL) current = current->next;
+		current->next = new_client;
+	}
+}
+
+void *receiverThread(void *args)
+{
+	while(true) {
+		cout << "receiver thread..." << endl;
+		sleep(2);
+	}
+
+	return NULL;
+}
+
+void *transmitterThread(void *args)
+{
+	while(true) {
+		sleep(1);
+		cout << "transmitter thread..." << endl;
+		sleep(1);
+	}
+
+	return NULL;
 }
 
 /* -------------------------------------------------------------------------
@@ -104,8 +150,20 @@ int main(int argc, char *argv[])
 			} else {
 				cout << "New connection accepted. Creating client thread..." << endl;
 
+				// Allocate memory for client_t structure
+				client_t *new_client = (client_t*)malloc(sizeof(client_t));
+
+				new_client->socket = csock;
+				new_client->next = NULL;
+
 				// Create new client thread passing clientSocket as a parameter
-				// ...
+				pthread_attr_init(&new_client->receiverThreadAttr);
+				pthread_attr_init(&new_client->transmitterThreadAttr);
+
+				pthread_create(&new_client->receiverThd, &new_client->receiverThreadAttr, receiverThread, (void *)NULL);
+				pthread_create(&new_client->transmitterThd, &new_client->transmitterThreadAttr, transmitterThread, (void *)NULL);
+
+				add_client(new_client);
 			}
 		}
 	}
