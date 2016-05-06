@@ -14,6 +14,7 @@
 #include <errno.h>
 #include <pthread.h>
 #include <stdio.h>
+#include <sys/eventfd.h>
 
 #include <iostream>
 
@@ -28,6 +29,7 @@ static void signal_handler(int sig)
 
 typedef struct client {
 	int socket;
+	int terminateEventFD;
 	pthread_t receiverThd;
 	pthread_t transmitterThd;
 	pthread_attr_t receiverThreadAttr;
@@ -59,6 +61,7 @@ void *receiverThread(void *args)
 	while(true) {
 		msg_len = read(client->socket, msg, 1000);
 		if(msg_len == 0) {
+			printf("Connection closed. Terminating receiver thread.\n");
 			return NULL;
 		} else {
 			if(msg_len < 1000) {
@@ -83,10 +86,29 @@ void *transmitterThread(void *args)
 	buf = (char*)malloc(sizeof(char)*buf_size);
 
 	while(true) {
-		getline(&buf, &buf_size, stdin);
-		bytes_written = write(client->socket, buf, strlen(buf));
-		if(bytes_written < (ssize_t)0) {
-			break;
+
+		int result;
+		int nfds;
+		fd_set rfds;
+		FD_ZERO(&rfds);
+		FD_SET(fileno(stdin), &rfds);
+		FD_SET(client->terminateEventFD, &rfds);
+		if(fileno(stdin) > client->terminateEventFD) {
+			nfds = fileno(stdin) + 1;
+		} else {
+			nfds = client->terminateEventFD + 1;
+		}
+		result = select(nfds, &rfds, NULL, (fd_set *) 0, NULL);
+		if(FD_ISSET(client->terminateEventFD, &rfds)) {
+			return NULL;
+		}
+		if(FD_ISSET(fileno(stdin), &rfds)) {
+			getline(&buf, &buf_size, stdin);
+			bytes_written = write(client->socket, buf, strlen(buf));
+			if(bytes_written < (ssize_t)0) {
+				printf("Connection closed by remote peer. Terminating transmitter thread.\n");
+				break;
+			}
 		}
 	}
 
@@ -170,23 +192,30 @@ int main(int argc, char *argv[])
 			return 1;
 		} else if (exit_request) {
 
-			printf("Terminating client threads.\n");
+			printf("Terminating receiver threads.\n");
 
 			client_t *current = client_list_head;
 
+			// Terminate receiver threads
 			while(current != NULL) {
 				shutdown(current->socket, 2);
-				current = current->next;
-			}
-
-			current = client_list_head;
-			while(current != NULL) {
 				pthread_join(current->receiverThd, NULL);
 				current = current->next;
 			}
 
-			// Terminate transmiter threads
-			// ...
+			printf("Terminating transmitter threads.\n");
+
+			// Terminate transmitter threads
+			current = client_list_head;
+			while(current != NULL) {
+				uint64_t val = 1;
+				write(current->terminateEventFD, &val, sizeof(val));
+				pthread_join(current->transmitterThd, NULL);
+				current = current->next;
+			}
+
+			printf("All threads terminated.\n");
+			fflush(stdout);
 
 			// Close sockets
 			// ...
@@ -203,6 +232,7 @@ int main(int argc, char *argv[])
 				client_t *new_client = (client_t*)malloc(sizeof(client_t));
 
 				new_client->socket = csock;
+				new_client->terminateEventFD = eventfd(0, EFD_SEMAPHORE);
 				new_client->next = NULL;
 
 				// Create new client thread passing clientSocket as a parameter
