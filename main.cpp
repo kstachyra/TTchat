@@ -62,6 +62,11 @@ void *receiverThread(void *args)
 		msg_len = read(client->socket, msg, 1000);
 		if(msg_len == 0) {
 			printf("Connection closed. Terminating receiver thread.\n");
+
+			// Terminate transmitter thread
+			uint64_t val = 1;
+			write(client->terminateEventFD, &val, sizeof(val));
+
 			return NULL;
 		} else {
 			if(msg_len < 1000) {
@@ -100,6 +105,7 @@ void *transmitterThread(void *args)
 		}
 		result = select(nfds, &rfds, NULL, (fd_set *) 0, NULL);
 		if(FD_ISSET(client->terminateEventFD, &rfds)) {
+			printf("Terminating transmitter thread.\n");
 			return NULL;
 		}
 		if(FD_ISSET(fileno(stdin), &rfds)) {
