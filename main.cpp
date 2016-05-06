@@ -192,20 +192,18 @@ int main(int argc, char *argv[])
 			return 1;
 		} else if (exit_request) {
 
-			printf("Terminating receiver threads.\n");
-
 			client_t *current = client_list_head;
 
 			// Terminate receiver threads
+			printf("Terminating receiver threads.\n");
 			while(current != NULL) {
 				shutdown(current->socket, 2);
 				pthread_join(current->receiverThd, NULL);
 				current = current->next;
 			}
 
-			printf("Terminating transmitter threads.\n");
-
 			// Terminate transmitter threads
+			printf("Terminating transmitter threads.\n");
 			current = client_list_head;
 			while(current != NULL) {
 				uint64_t val = 1;
@@ -217,8 +215,13 @@ int main(int argc, char *argv[])
 			printf("All threads terminated.\n");
 			fflush(stdout);
 
-			// Close sockets
-			// ...
+			// Close all sockets
+			printf("Closing clients' sockets.\n");
+			current = client_list_head;
+			while(current != NULL) {
+				close(current->socket);
+				current = current->next;
+			}
 
 			break;
 		} else {
