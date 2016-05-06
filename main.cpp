@@ -72,6 +72,7 @@ void *receiverThread(void *args)
 void *transmitterThread(void *args)
 {
 	size_t buf_size = 1000;
+	ssize_t bytes_written;
 	char *buf;
 	client_t *client = (client_t*) args;
 
@@ -79,7 +80,10 @@ void *transmitterThread(void *args)
 
 	while(true) {
 		getline(&buf, &buf_size, stdin);
-		write(client->socket, buf, strlen(buf));
+		bytes_written = write(client->socket, buf, strlen(buf));
+		if(bytes_written < (ssize_t)0) {
+			break;
+		}
 	}
 
 	return NULL;
@@ -106,6 +110,8 @@ int main(int argc, char *argv[])
 		perror ("sigaction");
 		return 1;
 	}
+
+	signal(SIGPIPE, SIG_IGN);
 
 	// Mask SIGINT
 	sigemptyset(&mask);
