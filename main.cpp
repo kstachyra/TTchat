@@ -53,17 +53,21 @@ void add_client(client_t *new_client)
 void *receiverThread(void *args)
 {
 	char msg[1000];
-	size_t msg_len;
+	ssize_t msg_len;
 	client_t *client = (client_t*) args;
 
 	while(true) {
 		msg_len = read(client->socket, msg, 1000);
-		if(msg_len < 1000) {
-			msg[msg_len] = 0;
+		if(msg_len == 0) {
+			return NULL;
 		} else {
-			msg[999] = 0;
+			if(msg_len < 1000) {
+				msg[msg_len] = 0;
+			} else {
+				msg[999] = 0;
+			}
+			printf("%s", msg);
 		}
-		printf("%s", msg);
 	}
 
 	return NULL;
@@ -166,7 +170,25 @@ int main(int argc, char *argv[])
 			return 1;
 		} else if (exit_request) {
 
-			// Terminate all client threads
+			printf("Terminating client threads.\n");
+
+			client_t *current = client_list_head;
+
+			while(current != NULL) {
+				shutdown(current->socket, 2);
+				current = current->next;
+			}
+
+			current = client_list_head;
+			while(current != NULL) {
+				pthread_join(current->receiverThd, NULL);
+				current = current->next;
+			}
+
+			// Terminate transmiter threads
+			// ...
+
+			// Close sockets
 			// ...
 
 			break;
