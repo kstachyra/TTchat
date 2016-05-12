@@ -1,22 +1,29 @@
-#include <iostream>
+#include<iostream>
+#include<thread>
+
+
+#include "easylogging++.h"
+
+#define ELPP_THREAD_SAFE
+INITIALIZE_EASYLOGGINGPP
+
 using namespace std;
 
-void print();
+void hello();
 
-int main()
+int main(int, char**)
 {
-    cout << "Hello, World!" << endl;
+	el::Configurations conf("/home/ks/ClionProjects/TTchat/easyLogging.conf");
+	el::Loggers::reconfigureAllLoggers(conf);
 
-    for (int i=0; i<3; ++i)
-    {
-        print();
-    }
-    return 0;
+	LOG(INFO) << "My first info log using default logger";
+	thread t1(hello);
 
-    sleep(50);
+	t1.join();
+	return 0;
 }
 
-void print()
+void hello()
 {
-    cout<<"HsHsHs";
+	LOG(INFO) << "Hello World Log :)";
 }
