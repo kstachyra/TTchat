@@ -1,8 +1,10 @@
-#include<iostream>
-#include<thread>
-
+#include <iostream>
+#include <thread>
+#include <unordered_map>
 
 #include "easylogging++.h"
+#include "monitor.cpp"
+#include "protocol.h"
 
 #define ELPP_THREAD_SAFE
 INITIALIZE_EASYLOGGINGPP
@@ -10,20 +12,61 @@ INITIALIZE_EASYLOGGINGPP
 using namespace std;
 
 void hello();
+//void* ProducentX(void *CZAS);
+void easyLoggingInit(string const& confPath);
+//int mainamo();
 
-int main(int, char**)
+void serverListenThread(int port);
+
+//monitor klientów
+ClientMonitor clientMonitor;
+
+int main(int argc,  char* argv[])
 {
-	el::Configurations conf("/home/ks/ClionProjects/TTchat/easyLogging.conf");
-	el::Loggers::reconfigureAllLoggers(conf);
+    //inicjalizacja loggera z podanym plikiem konfiguracyjnym
+	easyLoggingInit("/home/ks/ClionProjects/TTchat/easyLogging.conf");
 
-	LOG(INFO) << "My first info log using default logger";
-	thread t1(hello);
+    //uruchomienie wątku nasłuchującego na nowe połączenia
+	thread listenThread(serverListenThread, 1234);
 
-	t1.join();
+
+    if (listenThread.joinable())
+        listenThread.join();
+
+
 	return 0;
 }
 
-void hello()
+void easyLoggingInit(string const& confPath)
 {
-	LOG(INFO) << "Hello World Log :)";
+    el::Configurations conf(confPath);
+    el::Loggers::reconfigureAllLoggers(conf);
+    LOG(INFO) << "zainicjowano easylogging++";
+}
+
+
+void serverListenThread(int port)
+{
+    listenSocketInit(port);
+    LOG(INFO) << "wątek nasłuchujący na połączenia uruchomiony";
+    int x = listen();
+
+    if (x==1)
+        clientMonitor.addClient();
+
+}
+
+void clientReciverThread()
+{
+
+}
+
+void clientTransmitterThread()
+{
+
+}
+
+void serviceThread()
+{
+    LOG(INFO) << "uruchomiono wątek serwisowy";
 }
