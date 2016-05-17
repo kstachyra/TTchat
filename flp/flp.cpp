@@ -62,11 +62,18 @@ FLP_Connection_t* FLP_Connect(int socket)
 	connection = (FLP_Connection_t*)malloc(sizeof(FLP_Connection_t));
 	if(connection == NULL) return NULL;
 
-	FLP_Init(connection, socket);
+	// Initialize mutexes, eventfds, socket etc.
+	if(!FLP_Init(connection, socket)) {
+		free(connection);
+		return NULL;
+	}
 
 	// Perform FLP handshake (establish connection and exchange keys)
 	result = FLP_Handshake(connection);
-	if(!result) return NULL;
+	if(!result) {
+		free(connection);
+		return NULL;
+	}
 
 	// Start receiver thread
 	pthread_attr_init(&connection->threadAttr);
