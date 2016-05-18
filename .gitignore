@@ -3,3 +3,4 @@ libtomcrypt
 .project
 .cproject
 .settings
+/build/*
