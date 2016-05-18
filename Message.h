@@ -78,7 +78,11 @@ public:
 
     int getRoomID()
     {
-        if (type == ERR) return -1;
+        if (type == ERR)
+        {
+            LOG(INFO) << "nie można odczytać RoomID dla Message typu ERR";
+            return -1;
+        }
         return toInt(0, 3);
     }
 
@@ -100,18 +104,97 @@ public:
         {
             return toInt(4, 7);
         }
-        LOG(INFO) << "błędny typ Message dla getReason"
+        LOG(INFO) << "błędny typ Message dla getReason";
         return -1;
     }
 
-    int setReason(int reason)
+    void setReason(int reason)
     {
         if (type == SUBREF)
         {
             toVec(reason, 4, 7);
         }
-        LOG(INFO) << "błędny typ Message dla setReason"
+        else LOG(INFO) << "błędny typ Message dla setReason";
     }
+
+    int getLastMessageID()
+    {
+        if (type == ROOMINF)
+        {
+            return toInt(4, 7);
+        }
+        else if (type == PULLMSGS)
+        {
+            return toInt(8, 11);
+        }
+        LOG(INFO) << "błędny typ Message dla getLastMessageID";
+        return -1;
+    }
+
+    void setLastMessageID(int id)
+    {
+        if (type == ROOMINF)
+        {
+            toVec(id, 4, 7);
+        }
+        else if (type == PULLMSGS)
+        {
+            toVec(id, 8, 11);
+        }
+        else LOG(INFO) << "błędny typ Message dla setLastMessageID";
+    }
+
+    int getNumberOFMessages()
+    {
+        if (type == ROOMINF)
+        {
+            return toInt(8, 11);
+        }
+        LOG(INFO) << "błędny typ Message dla getLastMessageID";
+        return -1;
+    }
+
+    void setNumberOFMessages(int num)
+    {
+        if (type == ROOMINF)
+        {
+            toVec(num, 8, 11);
+        }
+        else LOG(INFO) << "błędny typ Message dla setLastMessageID";
+    }
+
+    int getFirstMessageID()
+    {
+        if (type == PULLMSGS)
+        {
+            return toInt(4, 7);
+        }
+        LOG(INFO) << "błędny typ Message dla getFirstMessageID";
+        return -1;
+    }
+
+    void setFirstMessageID(int id)
+    {
+        if (type == PULLMSGS)
+        {
+            toVec(id, 4, 7);
+        }
+        else LOG(INFO) << "błędny typ Message dla setFirstMessageID";
+    }
+
+    int setMessage()
+    {
+        if (type == MSGSER)
+        {
+
+        }
+        else if (type == MSGCLI)
+        {
+
+        }
+        else
+    }
+
 
 private:
     /*
