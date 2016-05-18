@@ -52,8 +52,16 @@ void serverListenThread(int port)
     Connection con(port);
     LOG(INFO) << "utworzono połączenie dla wątku nasłuchującego";
 
-    Message x;
-    x = con.getMessage();
+    Message x(Message::GETINF);
+    //x = con.getMessage();
+
+    x.setRoomID(156);
+    cout<<"\n\nDSDS"<<x.getRoomID();
+    x.setRoomID(55555);
+    cout<<"\n\nDSDS"<<x.getRoomID();
+    x.setRoomID(159482637);
+    cout<<"\n\nDSDS"<<x.getRoomID();
+
 
 
 

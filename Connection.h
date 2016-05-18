@@ -42,7 +42,7 @@ public:
      */
     Message getMessage()
     {
-        return Message();
+        return Message(Message::ERR);
     }
 
 
