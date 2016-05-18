@@ -1,6 +1,6 @@
 /*
  * bazowa klasa monitora, definiująca zmienne warunkowe i semafory
- * stworzona na potrzeby przedmiotu AISDI
+ * stworzona na potrzeby przedmiotu SOI
  * potrzebny monitor powinien po niej dziedziczyć
  */
 
@@ -117,4 +117,4 @@ private:
 	Semaphore s;
 };
 
-#endif //ONITOR_H
+#endif //MONITOR_H

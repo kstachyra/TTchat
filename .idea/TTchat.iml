@@ -2,14 +2,18 @@
 <module type="CPP_MODULE" version="4">
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
-      <sourceFolder url="file://$MODULE_DIR$/protocol.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/Monitor.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/Message.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/CMakeLists.txt" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/monitor.h" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/main.cpp" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/Client.cpp" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/monitor.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/Connection.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/Conversation.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/flp/flp_crypto.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/flp/flp.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/flp/flp.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/server.cpp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/protocol.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/Client.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/ClientMonitor.h" isTestSource="false" />
     </content>
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library">

@@ -12,6 +12,7 @@ public:
 
     int conversationId;
 
+    //poniżej tymczasowe pola, na potrzeby protokołu
     pthread_t receiverThd;
     pthread_t transmitterThd;
     pthread_attr_t receiverThreadAttr;

@@ -1,12 +1,12 @@
-//
-// Created by ks on 12.05.16.
-//
+/*
+ * obsługa protokołu sieciowego (FLP, SLP)
+ */
 
 #ifndef TTCHAT_PROTOCOL_H
 #define TTCHAT_PROTOCOL_H
 
+#include "flp/flp.h"
 
-int listenSocketInit(unsigned short port);
-int listen();
+
 
 #endif //TTCHAT_PROTOCOL_H

@@ -1,20 +1,17 @@
 #include <iostream>
 #include <thread>
-#include <unordered_map>
 
 #include "easylogging++.h"
-#include "monitor.cpp"
-#include "protocol.h"
+#include "ClientMonitor.h"
+#include "Connection.h"
+#include "Message.h"
 
-#define ELPP_THREAD_SAFE
+#define ELPP_THREAD_SAFE 1
 INITIALIZE_EASYLOGGINGPP
 
 using namespace std;
 
-void hello();
-//void* ProducentX(void *CZAS);
 void easyLoggingInit(string const& confPath);
-//int mainamo();
 
 void serverListenThread(int port);
 
@@ -29,9 +26,8 @@ int main(int argc,  char* argv[])
     //uruchomienie wątku nasłuchującego na nowe połączenia
 	thread listenThread(serverListenThread, 1234);
 
-
-    if (listenThread.joinable())
-        listenThread.join();
+    //poczekaj na wątki
+    if (listenThread.joinable()) listenThread.join();
 
 
 	return 0;
@@ -45,14 +41,27 @@ void easyLoggingInit(string const& confPath)
 }
 
 
+/*
+ * wątki serwera
+ */
+
 void serverListenThread(int port)
 {
-    listenSocketInit(port);
     LOG(INFO) << "wątek nasłuchujący na połączenia uruchomiony";
-    int x = listen();
 
-    if (x==1)
-        clientMonitor.addClient();
+    Connection con(port);
+    LOG(INFO) << "utworzono połączenie dla wątku nasłuchującego";
+
+    Message x;
+    x = con.getMessage();
+
+
+
+
+}
+
+void conversationThread()
+{
 
 }
 
