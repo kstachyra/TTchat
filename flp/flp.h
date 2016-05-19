@@ -48,17 +48,9 @@ typedef struct {
 } FLP_Connection_t;
 
 /* Exported functions ------------------------------------------------------ */
-#if defined (__cplusplus)
-extern "C" {
-#endif
-
 FLP_Connection_t* FLP_Connect(int socket);
 bool FLP_Write(FLP_Connection_t *connection, uint8_t *data, size_t length);
 bool FLP_Read(FLP_Connection_t *connection, uint8_t **data, size_t *length);
 bool FLP_Close(FLP_Connection_t *connection);
-
-#if defined (__cplusplus)
-}
-#endif
 
 #endif /* FLP_H_ */

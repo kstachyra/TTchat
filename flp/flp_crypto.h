@@ -19,9 +19,6 @@
 #define FLP_PUBLIC_KEY_LENGTH				((size_t)128)
 
 /* Exported functions ------------------------------------------------------ */
-#if defined (__cplusplus)
-extern "C" {
-#endif
 
 // AES, CTR mode, 256 bit key, 128 bit block
 bool FLP_AES_Init(void);
@@ -31,9 +28,5 @@ bool FLP_AES_GenerateSessionKey(uint8_t *sessionKey);
 
 // TODO: RSA
 // ...
-
-#if defined (__cplusplus)
-}
-#endif
 
 #endif /* FLP_CRYPTO_H_ */
