@@ -15,6 +15,7 @@
 /* Exported definitions and macros ----------------------------------------- */
 #define FLP_AES_BLOCK_SIZE					((size_t)16)
 #define FLP_SESSION_KEY_LENGTH				((size_t)32)
+
 #define FLP_PUBLIC_KEY_LENGTH				((size_t)128)
 
 /* Exported functions ------------------------------------------------------ */
@@ -27,6 +28,9 @@ bool FLP_AES_Init(void);
 bool FLP_AES_Encrypt(uint8_t *inBuffer, size_t length, uint8_t *sessionKey, uint8_t *initVector, uint8_t *outBuffer);
 bool FLP_AES_Decrypt(uint8_t *inBuffer, size_t length, uint8_t *sessionKey, uint8_t *initVector, uint8_t *outBuffer);
 bool FLP_AES_GenerateSessionKey(uint8_t *sessionKey);
+
+// TODO: RSA
+// ...
 
 #if defined (__cplusplus)
 }

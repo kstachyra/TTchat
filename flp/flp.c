@@ -6,6 +6,7 @@
  */
 
 #include "flp.h"
+#include "flp_config.h"
 #include <inttypes.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -13,9 +14,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/eventfd.h>
-
-/* Settings ---------------------------------------------------------------- */
-#define FLP_ENABLE_LOG						true
 
 /* Private definitions and macros ------------------------------------------ */
 #define FLP_TYPE_CLIENT_HELLO				((uint16_t)0x0000)
@@ -420,8 +418,11 @@ static bool FLP_Handshake(FLP_Connection_t *connection)
 	if(header.type != FLP_TYPE_CLIENT_HELLO || header.payloadLength != FLP_PUBLIC_KEY_LENGTH) return false;
 	if(!FLP_Receive(connection, publicKey, FLP_PUBLIC_KEY_LENGTH)) return false;
 
-	// Generate symmetrical key
-	// ...
+	// Generate session key
+	if(!FLP_AES_GenerateSessionKey(connection->sessionKey)) {
+		FLP_LOG("FLP_Handshake: Error occurred while generating session key.\n");
+		return false;
+	}
 
 	// TODO: Encrypt generated key
 	// ...

@@ -1,9 +1,8 @@
 #include "flp_crypto.h"
+#include "flp_config.h"
 #include <tomcrypt.h>
 
 // TODO: Thread safe version
-/* Settings ---------------------------------------------------------------- */
-#define FLP_CRYPTO_ENABLE_LOG						true
 
 /* Private definitions and macros ------------------------------------------ */
 #if FLP_CRYPTO_ENABLE_LOG
