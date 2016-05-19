@@ -36,7 +36,8 @@
 /* Private types ----------------------------------------------------------- */
 typedef struct {
 	uint16_t type;
-	uint16_t length;
+	uint16_t payloadLength;
+	uint16_t dataLength;
 } FLP_Header_t;
 
 /* Private functions' prototypes ------------------------------------------- */
@@ -205,8 +206,8 @@ static void *FLP_Thread(void *args)
 			if(header.type != FLP_TYPE_DATA) break;
 
 			// Receive payload
-			encryptedData = (uint8_t*)malloc(sizeof(uint8_t)*header.length);
-			result = FLP_Receive(connection, encryptedData, header.length);
+			encryptedData = (uint8_t*)malloc(sizeof(uint8_t)*header.payloadLength);
+			result = FLP_Receive(connection, encryptedData, header.payloadLength);
 			// TODO: Check for errors
 
 			// TODO: Decrypt payload
@@ -403,7 +404,7 @@ bool FLP_SendAck(FLP_Connection_t *connection, uint16_t type)
 	FLP_Header_t header;
 
 	header.type = FLP_SET_ACK_BIT(type);
-	header.length = 0;
+	header.payloadLength = 0;
 
 	return FLP_Transmit(connection, (uint8_t*)&header, sizeof(FLP_Header_t));
 }
@@ -416,11 +417,11 @@ static bool FLP_Handshake(FLP_Connection_t *connection)
 
 	// Wait for ClientHello packet
 	if(!FLP_ReceiveHeader(connection, &header)) return false;
-	if(header.type != FLP_TYPE_CLIENT_HELLO || header.length != FLP_PUBLIC_KEY_LENGTH) return false;
+	if(header.type != FLP_TYPE_CLIENT_HELLO || header.payloadLength != FLP_PUBLIC_KEY_LENGTH) return false;
 	if(!FLP_Receive(connection, publicKey, FLP_PUBLIC_KEY_LENGTH)) return false;
 
 	// Generate symmetrical key
-	FLP_GenerateSessionKey(connection->sessionKey);
+	// ...
 
 	// TODO: Encrypt generated key
 	// ...
@@ -430,7 +431,7 @@ static bool FLP_Handshake(FLP_Connection_t *connection)
 
 	// Wait for ACK
 	if(!FLP_ReceiveHeader(connection, &header)) return false;
-	if(header.type != FLP_SET_ACK_BIT(FLP_TYPE_SERVER_HELLO) || header.length != 0) return false;
+	if(header.type != FLP_SET_ACK_BIT(FLP_TYPE_SERVER_HELLO) || header.payloadLength != 0) return false;
 
 	// Change state of the connection
 	connection->state = FLP_CONNECTED;
@@ -474,7 +475,7 @@ static bool FLP_TransmitPacket(FLP_Connection_t *connection, uint16_t type, uint
 	// Fill in the header
 	header = (FLP_Header_t*)packet;
 	header->type = FLP_TYPE_DATA;
-	header->length = length;
+	header->payloadLength = length;
 
 	result = FLP_Transmit(connection, packet, sizeof(FLP_Header_t) + length*sizeof(uint8_t));
 
