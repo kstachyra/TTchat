@@ -48,6 +48,7 @@ static bool FLP_Transmit(FLP_Connection_t *connection, uint8_t *data, size_t len
 static bool FLP_TransmitPacket(FLP_Connection_t *connection, uint16_t type, uint8_t* payload, size_t length);
 static bool FLP_Receive(FLP_Connection_t *connection, uint8_t *data, size_t length);
 static bool FLP_ReceiveHeader(FLP_Connection_t *connection, FLP_Header_t *header);
+static bool FLP_ReceiveClientHello(FLP_Connection_t *connection, uint8_t *publicKey);
 static bool FLP_SendAck(FLP_Connection_t *connection, uint16_t type);
 static bool FLP_Handshake(FLP_Connection_t *connection);
 static bool FLP_Terminate(FLP_Connection_t *connection, bool write, bool read, bool receive);
@@ -59,10 +60,14 @@ FLP_Connection_t* FLP_Connect(int socket)
 	FLP_Connection_t *connection;
 
 	connection = (FLP_Connection_t*)malloc(sizeof(FLP_Connection_t));
-	if(connection == NULL) return NULL;
+	if(connection == NULL) {
+		FLP_LOG("FLP_Connect: Couldn't allocate memory for connection.\n");
+		return NULL;
+	}
 
 	// Initialize mutexes, eventfds, socket etc.
 	if(!FLP_Init(connection, socket)) {
+		FLP_LOG("FLP_Connect: FLP_Init failed.\n");
 		free(connection);
 		return NULL;
 	}
@@ -70,6 +75,7 @@ FLP_Connection_t* FLP_Connect(int socket)
 	// Perform FLP handshake (establish connection and exchange keys)
 	result = FLP_Handshake(connection);
 	if(!result) {
+		FLP_LOG("FLP_Connect: FLP_Handshake failed.\n");
 		free(connection);
 		return NULL;
 	}
@@ -78,6 +84,8 @@ FLP_Connection_t* FLP_Connect(int socket)
 	pthread_attr_init(&connection->threadAttr);
 	pthread_create(&connection->thread, &connection->threadAttr, FLP_Thread, (void *)connection);
 
+	FLP_LOG("FLP_Connect: Connected successfully.\n");
+
 	return connection;
 }
 
@@ -85,17 +93,21 @@ bool FLP_Write(FLP_Connection_t *connection, uint8_t *data, size_t length)
 {
 	int ndfs, result;
 	fd_set rfds;
-	uint8_t *encryptedData;
-	size_t encryptedDataLength;
+	uint8_t encryptedData[length], initVector[FLP_AES_BLOCK_SIZE];
 
 	// Check connection state
 	if(connection->state != FLP_CONNECTED) return false;
 
-	// TODO: Encrypt data
-	// ...
+	// Encrypt data
+	if(!FLP_AES_Encrypt(data, length, connection->sessionKey, initVector, encryptedData)) {
+		FLP_LOG("FLP_Write: Data encryption failed.\n");
+		return false;
+	}
+
+	// TODO: Add AES initialization vector
 
 	// Construct and transmit packet
-	if(!FLP_TransmitPacket(connection, FLP_TYPE_DATA, encryptedData, encryptedDataLength)) return false;
+	if(!FLP_TransmitPacket(connection, FLP_TYPE_DATA, encryptedData, length)) return false;
 
 	// Wait for ACK or termination request
 	FD_ZERO(&rfds);
@@ -110,18 +122,18 @@ bool FLP_Write(FLP_Connection_t *connection, uint8_t *data, size_t length)
 
 	// If termination request was received...
 	if(FD_ISSET(connection->terminateWrite, &rfds)) {
-		FLP_LOG("FLP_Write(): Terminated while waiting for ACK.\n");
+		FLP_LOG("FLP_Write: Terminated while waiting for ACK.\n");
 		return false;
 	}
 
 	// If ACK was received...
 	if(FD_ISSET(connection->ackReceived, &rfds)) {
-		FLP_LOG("FLP_Write(): ACK received.\n");
+		FLP_LOG("FLP_Write: ACK received.\n");
 		return true;
 	}
 
 	// Should never happen...
-	FLP_LOG("FLP_Write(): WTF?! No file descriptor is set.\n");
+	FLP_LOG("FLP_Write: WTF?! No file descriptor is set.\n");
 	return false;
 }
 
@@ -149,7 +161,7 @@ bool FLP_Read(FLP_Connection_t *connection, uint8_t **data, size_t *length)
 
 	// If termination request was received...
 	if(FD_ISSET(connection->terminateRead, &rfds)) {
-		FLP_LOG("FLP_Read(): Terminated while waiting for new data in the queue.\n");
+		FLP_LOG("FLP_Read: Terminated while waiting for new data in the queue.\n");
 		return false;
 	}
 
@@ -160,7 +172,7 @@ bool FLP_Read(FLP_Connection_t *connection, uint8_t **data, size_t *length)
 	}
 
 	// Should never happen...
-	FLP_LOG("FLP_Write(): WTF?! No file descriptor is set.\n");
+	FLP_LOG("FLP_Read: WTF?! No file descriptor is set.\n");
 	return false;
 }
 
@@ -182,8 +194,7 @@ bool FLP_Close(FLP_Connection_t *connection)
 static void *FLP_Thread(void *args)
 {
 	bool result, shouldTerminate = false;
-	uint8_t *decryptedData, *encryptedData;
-	size_t decryptedDataLength;
+	uint8_t *payload, *initVector, *decryptedData, *encryptedData;
 	FLP_Header_t header;
 	FLP_Connection_t *connection = (FLP_Connection_t*)args;
 
@@ -203,16 +214,28 @@ static void *FLP_Thread(void *args)
 			// Only data packets should be received at this point. If packet of other type was received, drop it.
 			if(header.type != FLP_TYPE_DATA) break;
 
+			// Allocate memory for payload and decrypted data
+			payload = (uint8_t*)malloc(sizeof(uint8_t)*header.payloadLength);
+			decryptedData = (uint8_t*)malloc(header.payloadLength - FLP_AES_BLOCK_SIZE);
+
 			// Receive payload
-			encryptedData = (uint8_t*)malloc(sizeof(uint8_t)*header.payloadLength);
-			result = FLP_Receive(connection, encryptedData, header.payloadLength);
+			result = FLP_Receive(connection, payload, header.payloadLength);
 			// TODO: Check for errors
 
-			// TODO: Decrypt payload
-			// ...
+			initVector = payload;
+			encryptedData = payload + FLP_AES_BLOCK_SIZE;
+
+			// Decrypt received data
+			if(!FLP_AES_Decrypt(encryptedData, header.payloadLength - FLP_AES_BLOCK_SIZE, connection->sessionKey, initVector, decryptedData)) {
+				FLP_LOG("FLP_Thread: Decrypting data failed. Skipping packet.\n");
+				break;
+			}
+
+			// Since data in now decrypted, we no longer need the payload
+			free(payload);
 
 			// Push decrypted payload to queue and notify
-			FLP_PushToQueue(&connection->readQueue, decryptedData, decryptedDataLength);
+			FLP_PushToQueue(&connection->readQueue, decryptedData, header.payloadLength - FLP_AES_BLOCK_SIZE);
 			FLP_EventSend(connection->readQueue.newElementAvailable);
 
 			// Send ACK
@@ -333,6 +356,29 @@ static bool FLP_Transmit(FLP_Connection_t *connection, uint8_t *data, size_t len
 	return true;
 }
 
+static bool FLP_TransmitPacket(FLP_Connection_t *connection, uint16_t type, uint8_t* payload, size_t length)
+{
+	bool result;
+	uint8_t *packet;
+	FLP_Header_t *header;
+
+	// Allocate memory and copy the payload
+	packet = (uint8_t*)malloc(sizeof(FLP_Header_t) + length*sizeof(uint8_t));
+	if(packet == NULL) return false;
+	memcpy(packet + sizeof(FLP_Header_t), payload, length);
+
+	// Fill in the header
+	header = (FLP_Header_t*)packet;
+	header->type = FLP_TYPE_DATA;
+	header->payloadLength = length;
+
+	result = FLP_Transmit(connection, packet, sizeof(FLP_Header_t) + length*sizeof(uint8_t));
+
+	free(packet);
+
+	return result;
+}
+
 static bool FLP_Receive(FLP_Connection_t *connection, uint8_t *data, size_t length)
 {
 	int ndfs, result;
@@ -365,7 +411,7 @@ static bool FLP_Receive(FLP_Connection_t *connection, uint8_t *data, size_t leng
 			} else if(bytesRead == 0) {
 
 				// Connection was probably closed by remote peer
-				FLP_LOG("FLP_Receive(): Connection lost.\n");
+				FLP_LOG("FLP_Receive: Connection lost.\n");
 				connection->state = FLP_DISCONNECTED;
 
 				// At this point other threads might be blocked on FLP_Write or FLP_Read, therefore we have to send them terminating event
@@ -380,12 +426,12 @@ static bool FLP_Receive(FLP_Connection_t *connection, uint8_t *data, size_t leng
 
 		// Check if termination request was received
 		if(FD_ISSET(connection->terminateReceive, &rfds)) {
-			FLP_LOG("FLP_Receive(): Termination request received while waiting for new data.\n");
+			FLP_LOG("FLP_Receive: Termination request received while waiting for new data.\n");
 			return false;
 		}
 
 		// Should never happen...
-		FLP_LOG("FLP_Receive(): WTF?! No file descriptor is set.\n");
+		FLP_LOG("FLP_Receive: WTF?! No file descriptor is set.\n");
 		return false;
 	}
 
@@ -407,6 +453,34 @@ bool FLP_SendAck(FLP_Connection_t *connection, uint16_t type)
 	return FLP_Transmit(connection, (uint8_t*)&header, sizeof(FLP_Header_t));
 }
 
+static bool FLP_ReceiveClientHello(FLP_Connection_t *connection, uint8_t *publicKey)
+{
+	FLP_Header_t header;
+
+	// Receive header
+	if(!FLP_ReceiveHeader(connection, &header)) {
+		FLP_LOG("FLP_ReceiveClientHello: Error occurred while receiving header of ClientHello packet.\n");
+		return false;
+	}
+
+	// Check received header
+	if(header.type != FLP_TYPE_CLIENT_HELLO) {
+		FLP_LOG("FLP_ReceiveClientHello: Packet of invalid type received.\n");
+		return false;
+	} else if(header.payloadLength != FLP_PUBLIC_KEY_LENGTH) {
+		FLP_LOG("FLP_ReceiveClientHello: Unsupported public key length.\n");
+		return false;
+	}
+
+	// Receive payload (client's public RSA key)
+	if(!FLP_Receive(connection, publicKey, FLP_PUBLIC_KEY_LENGTH)) {
+		FLP_LOG("FLP_ReceiveClientHello: Error occurred while receiving client's public key.\n");
+		return false;
+	}
+
+	return true;
+}
+
 static bool FLP_Handshake(FLP_Connection_t *connection)
 {
 	FLP_Header_t header;
@@ -414,9 +488,10 @@ static bool FLP_Handshake(FLP_Connection_t *connection)
 	size_t encryptedSessionKeyLength;
 
 	// Wait for ClientHello packet
-	if(!FLP_ReceiveHeader(connection, &header)) return false;
-	if(header.type != FLP_TYPE_CLIENT_HELLO || header.payloadLength != FLP_PUBLIC_KEY_LENGTH) return false;
-	if(!FLP_Receive(connection, publicKey, FLP_PUBLIC_KEY_LENGTH)) return false;
+	if(!FLP_ReceiveClientHello(connection, publicKey)) {
+		FLP_LOG("FLP_Handshake: Error occurred while receiving ClientHello.\n");
+		return false;
+	}
 
 	// Generate session key
 	if(!FLP_AES_GenerateSessionKey(connection->sessionKey)) {
@@ -428,11 +503,20 @@ static bool FLP_Handshake(FLP_Connection_t *connection)
 	// ...
 
 	// Send ServerHello
-	if(!FLP_TransmitPacket(connection, FLP_TYPE_SERVER_HELLO, encryptedSessionKey, encryptedSessionKeyLength)) return false;
+	if(!FLP_TransmitPacket(connection, FLP_TYPE_SERVER_HELLO, encryptedSessionKey, encryptedSessionKeyLength)) {
+		FLP_LOG("FLP_Handshake: Error occurred while transmitting ServerHello packet.\n");
+		return false;
+	}
 
 	// Wait for ACK
-	if(!FLP_ReceiveHeader(connection, &header)) return false;
-	if(header.type != FLP_SET_ACK_BIT(FLP_TYPE_SERVER_HELLO) || header.payloadLength != 0) return false;
+	if(!FLP_ReceiveHeader(connection, &header)) {
+		FLP_LOG("FLP_Handshake: Error occurred while waiting for ACK for ServerHello.\n");
+		return false;
+	}
+	if(header.type != FLP_SET_ACK_BIT(FLP_TYPE_SERVER_HELLO) || header.payloadLength != 0) {
+		FLP_LOG("FLP_Handshake: Invalid packet received as a response to ServerHello.\n");
+		return false;
+	}
 
 	// Change state of the connection
 	connection->state = FLP_CONNECTED;
@@ -459,28 +543,4 @@ static bool FLP_Terminate(FLP_Connection_t *connection, bool write, bool read, b
 	}
 
 	return true;
-}
-
-
-static bool FLP_TransmitPacket(FLP_Connection_t *connection, uint16_t type, uint8_t* payload, size_t length)
-{
-	bool result;
-	uint8_t *packet;
-	FLP_Header_t *header;
-
-	// Allocate memory and copy the payload
-	packet = (uint8_t*)malloc(sizeof(FLP_Header_t) + length*sizeof(uint8_t));
-	if(packet == NULL) return false;
-	memcpy(packet + sizeof(FLP_Header_t), payload, length);
-
-	// Fill in the header
-	header = (FLP_Header_t*)packet;
-	header->type = FLP_TYPE_DATA;
-	header->payloadLength = length;
-
-	result = FLP_Transmit(connection, packet, sizeof(FLP_Header_t) + length*sizeof(uint8_t));
-
-	free(packet);
-
-	return result;
 }

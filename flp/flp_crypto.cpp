@@ -162,7 +162,7 @@ static bool FLP_PRNGInit(void)
 
 		// Setup yarrow
 		if ((errno = rng_make_prng(128, find_prng("yarrow"), &PRNGState, NULL)) != CRYPT_OK) {
-			FLP_CRYPTO_LOG("FLP_PRNGInit: Could not register PRNG. %s\n", error_to_string(errno));
+			FLP_CRYPTO_LOG("FLP_PRNGInit: Could not setup Yarrow PRNG. %s\n", error_to_string(errno));
 			return false;
 		}
 
