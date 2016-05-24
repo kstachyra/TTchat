@@ -8,9 +8,10 @@
 #ifndef FLP_H_
 #define FLP_H_
 
-#include "flp_crypto.h"
 #include <pthread.h>
 #include <stdint.h>
+
+#include "flp_crypto.h"
 
 /* Exported types ---------------------------------------------------------- */
 typedef struct FLP_ListElement {
@@ -34,6 +35,8 @@ typedef struct {
 	int terminateRead;
 	int terminateReceive;
 	int ackReceived;
+
+	bool terminateThread;
 
 	uint8_t sessionKey[FLP_SESSION_KEY_LENGTH];
 

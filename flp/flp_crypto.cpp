@@ -1,6 +1,4 @@
 #include "flp_crypto.h"
-#include "flp_config.h"
-#include <tomcrypt.h>
 
 // TODO: Thread safe version
 
@@ -12,162 +10,100 @@
 #endif
 
 /* Private types ----------------------------------------------------------- */
+typedef struct {
+	uint8_t initVector[FLP_AES_BLOCK_SIZE];
+	unsigned int num;
+	unsigned char ecount[FLP_AES_BLOCK_SIZE];
+} CTR_State_t;
+
 /* Private variables ------------------------------------------------------- */
-static int errno;
-
-// CTR module
-static symmetric_CTR CTR;
-
-// AES cipher
-static bool AESInitialized = false;
-static int AESCipherIdx, AESKeySize;
-static unsigned long AESBlockSize;
-
-// PRNG (Pseudo Random Number Generator)
-static bool PRNGInitialized = false;
-static prng_state PRNGState;
-
 /* Private functions' prototypes ------------------------------------------- */
-static bool FLP_PRNGInit(void);
+void CTR_Init(CTR_State_t *state, uint8_t initVector[FLP_AES_BLOCK_SIZE]);
 
 /* Exported functions ------------------------------------------------------ */
-bool FLP_AES_Init(void)
+bool FLP_Crypto_AESEncrypt(uint8_t *inBuffer, size_t length, uint8_t *sessionKey, uint8_t *initVector, uint8_t *outBuffer)
 {
-	// Register AES cipher
-	if(register_cipher(&aes_desc) < 0) {
-		FLP_CRYPTO_LOG("FLP_AES_Init: Could not register AES cipher.\n");
+	AES_KEY key;
+	CTR_State_t CTR_State;
+
+	// Generate initialization vector
+	if(!RAND_bytes(initVector, AES_BLOCK_SIZE)) {
+		FLP_CRYPTO_LOG("FLP_Crypto_AESEncrypt: Generating initialization vector failed.\n");
 		return false;
 	}
 
-	// Find AES cipher index
-	AESCipherIdx = find_cipher("aes");
-	if(AESCipherIdx == -1) {
-		FLP_CRYPTO_LOG("FLP_AES_Init: Could not find AES cipher.\n");
+	// Initialize CTR state
+	CTR_Init(&CTR_State, initVector);
+
+	// Set encryption key
+	if(AES_set_encrypt_key(sessionKey, FLP_SESSION_KEY_LENGTH*8, &key) < 0) {
+		FLP_CRYPTO_LOG("FLP_Crypto_AESEncrypt: Setting AES encryption key failed.\n");
 		return false;
 	}
 
-	// Get AES block size
-	AESBlockSize = cipher_descriptor[AESCipherIdx].block_length;
-	if(AESBlockSize != FLP_AES_BLOCK_SIZE) {
-		FLP_CRYPTO_LOG("FLP_AES_Init: Selected block size is not supported.\n");
-		return false;
-	}
-
-	// Check selected session key size
-	AESKeySize = FLP_SESSION_KEY_LENGTH;
-	if(cipher_descriptor[AESCipherIdx].keysize(&AESKeySize) != CRYPT_OK) {
-		FLP_CRYPTO_LOG("FLP_AES_Init: Invalid session key size.\n");
-		return false;
-	}
-
-	AESInitialized = true;
+	AES_ctr128_encrypt(inBuffer, outBuffer, length, &key, CTR_State.initVector, CTR_State.ecount, &CTR_State.num);
 
 	return true;
 }
 
-bool FLP_AES_Encrypt(uint8_t *inBuffer, size_t length, uint8_t *sessionKey, uint8_t *initVector, uint8_t *outBuffer)
+bool FLP_Crypto_AESDecrypt(uint8_t *inBuffer, size_t length, uint8_t *sessionKey, uint8_t *initVector, uint8_t *outBuffer)
 {
-	unsigned long bytesGenerated;
+	AES_KEY key;
+	CTR_State_t CTR_State;
 
-	if(!AESInitialized)  {
-		FLP_CRYPTO_LOG("FLP_AES_Encrypt: Initialize AES first.\n");
+	// Initialize CTR state
+	CTR_Init(&CTR_State, initVector);
+
+	// Set encryption key
+	if(AES_set_encrypt_key(sessionKey, FLP_SESSION_KEY_LENGTH*8, &key) < 0) {
+		FLP_CRYPTO_LOG("FLP_Crypto_AESDecrypt: Setting AES encryption key failed.\n");
 		return false;
 	}
 
-	// Initialize PRNG (Pseudo Random Number Generator)
-	if(!FLP_PRNGInit()) {
-		FLP_CRYPTO_LOG("FLP_AES_Encrypt: Could not initialize PRNG.\n");
-		return false;
-	}
+	AES_ctr128_encrypt(inBuffer, outBuffer, length, &key, CTR_State.initVector, CTR_State.ecount, &CTR_State.num);
 
-	// Generate initialization vector using PRNG
-	bytesGenerated = yarrow_read(initVector, AESBlockSize, &PRNGState);
-	if(bytesGenerated != AESBlockSize) {
-		FLP_CRYPTO_LOG("FLP_AES_Encrypt: Error occurred while generating initialization vector.\n");
-		return false;
-	}
+	return true;
+}
 
-	// Initialize CTR
-	if((errno = ctr_start(AESCipherIdx, initVector, sessionKey, AESKeySize, 0, CTR_COUNTER_LITTLE_ENDIAN, &CTR)) != CRYPT_OK) {
-		FLP_CRYPTO_LOG("FLP_AES_Encrypt: Could not start CTR module.\n");
-		return false;
-	}
-
-	// Encrypt
-	if((errno = ctr_encrypt(inBuffer, outBuffer, length, &CTR)) != CRYPT_OK) {
-		FLP_CRYPTO_LOG("FLP_AES_Encrypt: Error occurred while encrypting.\n");
+bool FLP_Crypto_AESGenerateSessionKey(uint8_t *sessionKey)
+{
+	// Generate initialization vector
+	if(!RAND_bytes(sessionKey, FLP_SESSION_KEY_LENGTH)) {
+		FLP_CRYPTO_LOG("FLP_Crypto_AESGenerateSessionKey: Generating session key failed.\n");
 		return false;
 	}
 
 	return true;
 }
 
-bool FLP_AES_Decrypt(uint8_t *inBuffer, size_t length, uint8_t *sessionKey, uint8_t *initVector, uint8_t *outBuffer)
+bool FLP_Crypto_RSAEncryptSessionKey(uint8_t *data, ssize_t length, uint8_t *publicKey, uint8_t *encrypted)
 {
-	if(!AESInitialized)  {
-		FLP_CRYPTO_LOG("FLP_AES_Encrypt: Initialize AES first.\n");
+	RSA *rsa = NULL;
+	BIO *keybio;
+
+	// Create buffer for null terminated key
+	keybio = BIO_new_mem_buf(publicKey, -1);
+	if(keybio == NULL) {
+		FLP_CRYPTO_LOG("FLP_Crypto_RSAEncryptSessionKey: Failed to create key BIO.\n");
 		return false;
 	}
 
-	// Initialize CTR
-	if((errno = ctr_start(AESCipherIdx, initVector, sessionKey, AESKeySize, 0, CTR_COUNTER_LITTLE_ENDIAN, &CTR)) != CRYPT_OK) {
-		FLP_CRYPTO_LOG("FLP_AES_Encrypt: Could not start CTR module.\n");
+	// Read public key
+	rsa = PEM_read_bio_RSA_PUBKEY(keybio, &rsa, NULL, NULL);
+	if(rsa == NULL) {
+		FLP_CRYPTO_LOG("FLP_Crypto_RSAEncryptSessionKey: Failed to create RSA.\n");
 		return false;
 	}
 
-	// Decrypt
-	if((errno = ctr_decrypt(inBuffer, outBuffer, length, &CTR)) != CRYPT_OK) {
-		FLP_CRYPTO_LOG("FLP_AES_Encrypt: Error occurred while decrypting.\n");
-		return false;
-	}
-
-	return true;
-}
-
-bool FLP_AES_GenerateSessionKey(uint8_t *sessionKey)
-{
-	unsigned long bytesGenerated;
-
-	if(!AESInitialized)  {
-		FLP_CRYPTO_LOG("FLP_AES_Encrypt: Initialize AES first.\n");
-		return false;
-	}
-
-	// Initialize PRNG (Pseudo Random Number Generator)
-	if(!FLP_PRNGInit()) {
-		FLP_CRYPTO_LOG("FLP_AES_Encrypt: Could not initialize PRNG.\n");
-		return false;
-	}
-
-	// Generate initialization vector using PRNG
-	bytesGenerated = yarrow_read(sessionKey, AESKeySize, &PRNGState);
-	if(bytesGenerated != AESKeySize) {
-		FLP_CRYPTO_LOG("FLP_AES_Encrypt: Error occurred while generating session key.\n");
-		return false;
-	}
+	RSA_public_encrypt(length, data, encrypted, rsa, FLP_RSA_PADDING);
 
 	return true;
 }
 
 /* Private functions ------------------------------------------------------- */
-static bool FLP_PRNGInit(void)
+void CTR_Init(CTR_State_t *state, uint8_t initVector[FLP_AES_BLOCK_SIZE])
 {
-	if(!PRNGInitialized) {
-
-		// Register PRNG
-		if (register_prng(&yarrow_desc) == -1) {
-			FLP_CRYPTO_LOG("FLP_PRNGInit: Could not register PRNG.\n");
-			return false;
-		}
-
-		// Setup yarrow
-		if ((errno = rng_make_prng(128, find_prng("yarrow"), &PRNGState, NULL)) != CRYPT_OK) {
-			FLP_CRYPTO_LOG("FLP_PRNGInit: Could not setup Yarrow PRNG. %s\n", error_to_string(errno));
-			return false;
-		}
-
-		PRNGInitialized = true;
-	}
-
-	return true;
+    state->num = 0;
+    memset(state->ecount, 0, FLP_AES_BLOCK_SIZE);
+    memcpy(state->initVector, initVector, FLP_AES_BLOCK_SIZE);
 }
