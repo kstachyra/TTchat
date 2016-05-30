@@ -426,8 +426,13 @@ static bool FLP_Receive(FLP_Connection_t *connection, uint8_t *data, size_t leng
 			bytesRead = read(connection->socket, &data[bytesReadTotal], length - bytesReadTotal);
 			if(bytesRead < 0) {
 
-				// TODO: Check errno for EAGAIN or EWOULDBLOCK
-				// ...
+				if(errno == EWOULDBLOCK || errno == EAGAIN) {
+					FLP_LOG("FLP_Receive: Read returned %d. EWOULDBLOCK or EAGAIN is set.\n", bytesRead);
+					return false;
+				} else {
+					FLP_LOG("FLP_Receive: Read returned %d. Unknown error.\n", bytesRead);
+					return false;
+				}
 
 			} else if(bytesRead == 0) {
 
