@@ -12,6 +12,9 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/eventfd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include "flp.h"
 
@@ -38,11 +41,13 @@ typedef struct {
 } FLP_Header_t;
 
 /* Private functions' prototypes ------------------------------------------- */
+static FLP_Connection_t* FLP_Connect(int socket);
+
 /* Receiver thread */
 static void *FLP_Thread(void *args);
 
-/* Library initialization */
-static bool FLP_Init(FLP_Connection_t *connection, int socket);
+/* Initialize connection structure */
+static bool FLP_ConnectionInit(FLP_Connection_t *connection, int socket);
 
 /* List operations */
 static bool FLP_PushToQueue(FLP_Queue_t *queue, uint8_t *data, size_t length);
@@ -67,40 +72,88 @@ static bool FLP_ReceiveClientHello(FLP_Connection_t *connection, uint8_t *public
 static bool FLP_Terminate(FLP_Connection_t *connection, bool write, bool read, bool receive);
 
 /* Exported functions ------------------------------------------------------ */
-FLP_Connection_t* FLP_Connect(int socket)
+bool FLP_ListenerInit(FLP_Listener_t *listener, unsigned short port, char *host)
 {
-	bool result;
-	FLP_Connection_t *connection;
+	struct sockaddr_in sin;
 
-	connection = (FLP_Connection_t*)malloc(sizeof(FLP_Connection_t));
-	if(connection == NULL) {
-		FLP_LOG("FLP_Connect: Couldn't allocate memory for connection.\n");
-		return NULL;
+	pthread_mutex_init(&listener->listeningSocketLock, NULL);
+
+	// Initialize socket
+	if((listener->listeningSocket = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+		FLP_LOG("FLP_ListenerInit: Creating socket failed.\n");
+		return false;
 	}
 
-	// Initialize mutexes, eventfds, socket etc.
-	if(!FLP_Init(connection, socket)) {
-		FLP_LOG("FLP_Connect: FLP_Init failed.\n");
-		free(connection);
-		return NULL;
+	int enable = 1;
+	if (setsockopt(listener->listeningSocket, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0) {
+		FLP_LOG("FLP_ListenerInit: setsockopt failed.\n");
+		return false;
 	}
 
-	// Perform FLP handshake (establish connection and exchange keys)
-	result = FLP_Handshake(connection);
-	if(!result) {
-		FLP_LOG("FLP_Connect: FLP_Handshake failed.\n");
-		free(connection);
-		return NULL;
+	sin.sin_family = AF_INET;
+	sin.sin_port = htons(port);
+	if (inet_pton(AF_INET, host, &sin.sin_addr) != 1) {
+		FLP_LOG("FLP_ListenerInit: inet_pton failed.\n");
+		return false;
 	}
 
-	// Start receiver thread
-	connection->terminateThread = false;
-	pthread_attr_init(&connection->threadAttr);
-	pthread_create(&connection->thread, &connection->threadAttr, FLP_Thread, (void *)connection);
+	if (bind(listener->listeningSocket, (struct sockaddr*) &sin, sizeof(sin)) != 0) {
+		FLP_LOG("FLP_ListenerInit: Could not bind to socket.\n");
+		return false;
+	}
 
-	FLP_LOG("FLP_Connect: Connected successfully.\n");
+	return true;
+}
 
-	return connection;
+bool FLP_ListenerDeinit(FLP_Listener_t *listener)
+{
+	close(listener->listeningSocket);
+}
+
+bool FLP_Listen(FLP_Listener_t *listener, FLP_Connection_t **connection, unsigned short timeoutMs)
+{
+	int result, connectionSocket;
+	fd_set rfds;
+	struct timeval timeout;
+
+	// Enable listening for new TCP connections
+	if (listen(listener->listeningSocket, SOMAXCONN) != 0) {
+		FLP_LOG("FLP_Listen: listen failed.\n");
+		return false;
+	}
+
+	// Wait for new TCP connection
+	FD_ZERO(&rfds);
+	FD_SET(listener->listeningSocket, &rfds);
+	timeout.tv_sec = timeoutMs/1000;
+	timeout.tv_usec = (timeoutMs%1000)*1000;
+	result = select(listener->listeningSocket + 1, &rfds, NULL, NULL, &timeout);
+	if(result < 0) {
+		FLP_LOG("FLP_Listen: select failed.\n");
+		return false;
+	} else {
+		FLP_LOG("FLP_Listen: select timed out.\n");
+		*connection = NULL;
+		return true;
+	}
+
+	// Accept connection
+	connectionSocket = accept(listener->listeningSocket, NULL, NULL);
+	if(connectionSocket == -1) {
+		FLP_LOG("FLP_Listen: accept failed.\n");
+		return false;
+	}
+
+	FLP_LOG("FLP_Listen: New TCP connection accepted.\n");
+
+	// Establish FLP connection
+	*connection = FLP_Connect(connectionSocket);
+	if(*connection == NULL) {
+		FLP_LOG("FLP_Listen: FLP_Connect failed.\n");
+		return false;
+	}
+
+	return true;
 }
 
 bool FLP_Write(FLP_Connection_t *connection, uint8_t *data, size_t length)
@@ -206,6 +259,42 @@ bool FLP_Close(FLP_Connection_t *connection)
 }
 
 /* Private functions ------------------------------------------------------- */
+static FLP_Connection_t* FLP_Connect(int socket)
+{
+	bool result;
+	FLP_Connection_t *connection;
+
+	connection = (FLP_Connection_t*)malloc(sizeof(FLP_Connection_t));
+	if(connection == NULL) {
+		FLP_LOG("FLP_Connect: Couldn't allocate memory for connection.\n");
+		return NULL;
+	}
+
+	// Initialize connection structure
+	if(!FLP_ConnectionInit(connection, socket)) {
+		FLP_LOG("FLP_Connect: FLP_Init failed.\n");
+		free(connection);
+		return NULL;
+	}
+
+	// Perform FLP handshake (establish connection and exchange keys)
+	result = FLP_Handshake(connection);
+	if(!result) {
+		FLP_LOG("FLP_Connect: FLP_Handshake failed.\n");
+		free(connection);
+		return NULL;
+	}
+
+	// Start receiver thread
+	connection->terminateThread = false;
+	pthread_attr_init(&connection->threadAttr);
+	pthread_create(&connection->thread, &connection->threadAttr, FLP_Thread, (void *)connection);
+
+	FLP_LOG("FLP_Connect: Connected successfully.\n");
+
+	return connection;
+}
+
 static void *FLP_Thread(void *args)
 {
 	uint8_t *payload, *initVector, *decryptedData, *encryptedData;
@@ -281,9 +370,8 @@ static void *FLP_Thread(void *args)
 	return NULL;
 }
 
-static bool FLP_Init(FLP_Connection_t *connection, int socket)
+static bool FLP_ConnectionInit(FLP_Connection_t *connection, int socket)
 {
-	// TODO: Error checks
 	// TODO: Add function FLP_Init initializing semaphores, eventFDs, queues, configuring socket etc.
 	connection->socket = socket;
 	fcntl(socket, F_SETFL, fcntl(socket, F_GETFL) | O_NONBLOCK);
@@ -413,8 +501,9 @@ static bool FLP_Receive(FLP_Connection_t *connection, uint8_t *data, size_t leng
 		FD_SET(connection->socket, &rfds);
 		FD_SET(connection->terminateReceive, &rfds);
 		ndfs = (connection->socket > connection->terminateReceive) ? (connection->socket + 1) : (connection->terminateReceive + 1);
+
 		result = select(ndfs, &rfds, NULL, NULL, NULL);
-		if(result < -1) {
+		if(result <= -1) {
 			perror("select()");
 			return false;
 		}
@@ -447,8 +536,12 @@ static bool FLP_Receive(FLP_Connection_t *connection, uint8_t *data, size_t leng
 
 			} else {
 
+				FLP_LOG("FLP_Receive: %d bytes read.\n", bytesRead);
+
 				// Increase total number of bytes by the returned number
 				bytesReadTotal += bytesRead;
+
+				continue;
 			}
 		}
 
@@ -557,6 +650,7 @@ static bool FLP_TransmitData(FLP_Connection_t *connection, uint8_t *encryptedDat
 static bool FLP_ReceiveClientHello(FLP_Connection_t *connection, uint8_t *publicKey)
 {
 	FLP_Header_t header;
+	unsigned char *ptr = (char*)&header;
 
 	// Receive header
 	if(!FLP_ReceiveHeader(connection, &header)) {
@@ -564,9 +658,11 @@ static bool FLP_ReceiveClientHello(FLP_Connection_t *connection, uint8_t *public
 		return false;
 	}
 
+	printf("[%u, %u, %u, %u]\n", ptr[0], ptr[1], ptr[2], ptr[3]);
+
 	// Check received header
 	if(header.type != FLP_TYPE_CLIENT_HELLO) {
-		FLP_LOG("FLP_ReceiveClientHello: Packet of invalid type received.\n");
+		FLP_LOG("FLP_ReceiveClientHello: Packet of invalid type received (type = %d).\n", header.type);
 		return false;
 	} else if(header.payloadLength != FLP_PUBLIC_KEY_LENGTH) {
 		FLP_LOG("FLP_ReceiveClientHello: Unsupported public key length.\n");

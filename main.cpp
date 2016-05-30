@@ -1,47 +1,71 @@
-#include "flp/flp_crypto.h"
+#include <sys/select.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <netinet/in.h>
+#include <netinet/ip.h>
+#include <arpa/inet.h>
+#include <signal.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
+#include <pthread.h>
+#include <stdio.h>
+#include <sys/eventfd.h>
+#include "flp/flp.h"
+
+#include <iostream>
+
+using namespace std;
+
+static volatile int exit_request = 0;
+
+static void signal_handler(int sig)
+{
+	exit_request = 1;
+}
 
 int main(int argc, char *argv[])
 {
-	int i;
-    uint8_t sessionKey[FLP_SESSION_KEY_LENGTH + 1];
-    uint8_t plainText[1024];
-    uint8_t encrypted[1024];
-    uint8_t decrypted[1024];
-    uint8_t initVector[FLP_AES_BLOCK_SIZE];
+	char *host = "192.168.61.40";
+	unsigned short port = 1234;
+	FLP_Listener_t FLP_Listener;
+	FLP_Connection_t *FLP_Connection;
 
-    printf("Generating session key... ");
-    if(FLP_Crypto_AESGenerateSessionKey(sessionKey)) {
-    	printf("OK.\n");
-    } else {
-    	printf("FAILED.\n");
-    }
+	struct sigaction act;
 
-    sessionKey[FLP_SESSION_KEY_LENGTH] = 0;
+	// Set up signal handler
+	memset (&act, 0, sizeof(act));
+	act.sa_handler = signal_handler;
+	if(sigaction(SIGINT, &act, 0)) {
+		perror ("sigaction");
+		return 1;
+	}
 
-    printf("Session key: ");
-    for(i=0; i<FLP_SESSION_KEY_LENGTH; i++) {
-    	printf("%x", sessionKey[i]);
-    }
-    printf("\n");
+	signal(SIGPIPE, SIG_IGN);
 
-    printf("Input plain text:");
-    gets((char*)plainText);
+	FLP_ListenerInit(&FLP_Listener, port, host);
 
-    printf("Encrypting plain text... ");
-    if(FLP_Crypto_AESEncrypt(plainText, strlen((char *)plainText) + 1, sessionKey, initVector, encrypted)) {
-    	printf("OK.\n");
-    } else {
-    	printf("FAILED.\n");
-    }
+	// Listen for new connections
+	while(true) {
 
-    printf("Decrypting plain text... ");
-    if(FLP_Crypto_AESDecrypt(encrypted, strlen((char *)plainText) + 1, sessionKey, initVector, decrypted)) {
-    	printf("OK.\n");
-    } else {
-    	printf("FAILED.\n");
-    }
+		if(FLP_Listen(&FLP_Listener, &FLP_Connection, 500)) {
 
-    printf("Decrypted message: %s\n", decrypted);
+			// Check if new connection was established or timeout occurred
+			if(FLP_Connection) {
+				printf("New connection established.\n");
+			} else if(exit_request) {
+				return EXIT_SUCCESS;
+			}
 
-	return 0;
+		} else {
+			perror("FLP_Listen failed.\n");
+		}
+
+	}
+
+	return EXIT_SUCCESS;
 }

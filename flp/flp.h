@@ -29,6 +29,11 @@ typedef struct {
 typedef enum {FLP_DISCONNECTED, FLP_CONNECTED} FLP_State_t;
 
 typedef struct {
+	int listeningSocket;
+	pthread_mutex_t listeningSocketLock;
+} FLP_Listener_t;
+
+typedef struct {
 	int socket;
 
 	int terminateWrite;
@@ -51,7 +56,9 @@ typedef struct {
 } FLP_Connection_t;
 
 /* Exported functions ------------------------------------------------------ */
-FLP_Connection_t* FLP_Connect(int socket);
+bool FLP_ListenerInit(FLP_Listener_t *listener, unsigned short port, char *host);
+bool FLP_ListenerDeinit(FLP_Listener_t *listener);
+bool FLP_Listen(FLP_Listener_t *listener, FLP_Connection_t **connection, unsigned short timeoutMs);
 bool FLP_Write(FLP_Connection_t *connection, uint8_t *data, size_t length);
 bool FLP_Read(FLP_Connection_t *connection, uint8_t **data, size_t *length);
 bool FLP_Close(FLP_Connection_t *connection);
