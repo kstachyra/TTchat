@@ -52,6 +52,7 @@ int main(int argc, char *argv[])
 	// Listen for new connections
 	while(true) {
 
+		printf("Listening for new FLP connection... \n");
 		if(FLP_Listen(&FLP_Listener, &FLP_Connection, 500)) {
 
 			// Check if new connection was established or timeout occurred
@@ -62,7 +63,9 @@ int main(int argc, char *argv[])
 			}
 
 		} else {
-			perror("FLP_Listen failed.\n");
+
+			printf("FLP_Listen failed\n");
+			return 0;
 		}
 
 	}

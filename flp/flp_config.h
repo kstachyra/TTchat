@@ -23,6 +23,8 @@
 
 #define FLP_PUBLIC_KEY_LENGTH				((size_t)128)
 
+#define FLP_PUBLIC_KEY_PEM_LENGTH			((size_t)271)
+
 #define FLP_RSA_PADDING						RSA_PKCS1_OAEP_PADDING
 
 #endif /* FLP_CONFIG_H_ */

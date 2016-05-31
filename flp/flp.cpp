@@ -131,8 +131,8 @@ bool FLP_Listen(FLP_Listener_t *listener, FLP_Connection_t **connection, unsigne
 	if(result < 0) {
 		FLP_LOG("FLP_Listen: select failed.\n");
 		return false;
-	} else {
-		FLP_LOG("FLP_Listen: select timed out.\n");
+	} else if(result == 0) {
+//		FLP_LOG("FLP_Listen: select timed out.\n");
 		*connection = NULL;
 		return true;
 	}
@@ -468,8 +468,17 @@ static bool FLP_Transmit(FLP_Connection_t *connection, uint8_t *data, size_t len
 	pthread_mutex_lock(&connection->transmitLock);
 
 	while(bytesSentTotal != (ssize_t)length) {
-		bytesSent = write(connection->socket, &data[bytesSent], length - bytesSentTotal);
-		if(bytesSent < 0) return false;
+		bytesSent = write(connection->socket, &data[bytesSentTotal], length - bytesSentTotal);
+		if(bytesSent < 0) {
+			FLP_LOG("FLP_Transmit: write returned -1 (errno=%d).\n", errno);
+
+			if(errno == EAGAIN || errno == EWOULDBLOCK) {
+				FLP_LOG("FLP_Transmit: EAGAIN or EWOULDBLOCK is set.\n");
+				continue;
+			} else {
+				return false;
+			}
+		}
 		bytesSentTotal += bytesSent;
 	}
 
@@ -566,7 +575,7 @@ static bool FLP_ReceiveHeader(FLP_Connection_t *connection, FLP_Header_t *header
 
 static bool FLP_Handshake(FLP_Connection_t *connection)
 {
-	uint8_t publicKey[FLP_PUBLIC_KEY_LENGTH], encryptedSessionKey[FLP_PUBLIC_KEY_LENGTH];
+	uint8_t publicKey[FLP_PUBLIC_KEY_PEM_LENGTH], encryptedSessionKey[FLP_PUBLIC_KEY_LENGTH];
 
 	// Wait for ClientHello packet
 	if(!FLP_ReceiveClientHello(connection, publicKey)) {
@@ -613,6 +622,8 @@ static bool FLP_TransmitServerHello(FLP_Connection_t *connection, uint8_t *encry
 		FLP_LOG("FLP_TransmitServerHello: Error occurred while transmitting ServerHello packet's payload.\n");
 		return false;
 	}
+
+	FLP_LOG("FLP_TransmitServerHello: ServerHello sent (length=%d). Waiting for ACK.\n", encryptedSessionKeyLength);
 
 	// Wait for ACK
 	if(!FLP_ReceiveHeader(connection, &header)) {
@@ -664,13 +675,13 @@ static bool FLP_ReceiveClientHello(FLP_Connection_t *connection, uint8_t *public
 	if(header.type != FLP_TYPE_CLIENT_HELLO) {
 		FLP_LOG("FLP_ReceiveClientHello: Packet of invalid type received (type = %d).\n", header.type);
 		return false;
-	} else if(header.payloadLength != FLP_PUBLIC_KEY_LENGTH) {
-		FLP_LOG("FLP_ReceiveClientHello: Unsupported public key length.\n");
+	} else if (header.payloadLength != FLP_PUBLIC_KEY_PEM_LENGTH) {
+		FLP_LOG("FLP_ReceiveClientHello: Wrong public key length (%d)", header.payloadLength);
 		return false;
 	}
 
 	// Receive payload (client's public RSA key)
-	if(!FLP_Receive(connection, publicKey, FLP_PUBLIC_KEY_LENGTH)) {
+	if(!FLP_Receive(connection, publicKey, header.payloadLength)) {
 		FLP_LOG("FLP_ReceiveClientHello: Error occurred while receiving client's public key.\n");
 		return false;
 	}
