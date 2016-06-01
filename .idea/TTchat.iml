@@ -5,15 +5,14 @@
       <sourceFolder url="file://$MODULE_DIR$/Monitor.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/Message.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/CMakeLists.txt" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/Connection.h" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/Conversation.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/Client.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/ClientMonitor.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/Chatroom.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/server.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/protocol.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/flp/flp_crypto.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/flp/flp.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/flp/flp.cpp" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/server.cpp" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/protocol.h" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/Client.h" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/ClientMonitor.h" isTestSource="false" />
     </content>
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library">

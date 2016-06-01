@@ -6,10 +6,14 @@
 #define TTCHAT_MESSAGE_H
 
 #include <vector>
+#include <string>
+
+using namespace std;
 
 class Message
 {
 public:
+    //typ ERR oznacza stworzony obiekt Message bez innego określonego typu
     enum messageType {SUBREQ, SUBACK, SUBREF, UNSUB, GETINF, ROOMINF, PULLMSGS, MSGSER, MSGCLI, ERR};
 
 private:
@@ -21,7 +25,7 @@ private:
 
 public:
     /*
-     * konstruktor nieznanej wiadomości (do odbierania)
+     * konstruktor nieznanej wiadomości
      */
     Message()
     {
@@ -34,48 +38,30 @@ public:
     Message(messageType type)
     {
         this->type = type;
-        if (type == MSGSER || type ==MSGCLI)
-        {
-            LOG(INFO) << "nie podano długości dla Message o zmiennej długości!";
-            this->type = ERR;
-        }
-        if (type == SUBREQ || type == SUBACK || type == UNSUB || type == GETINF)
-        {
-            vecLength = 4;
-        }
-        else if (type == SUBREF)
-        {
-            vecLength = 8;
-        }
-        else if (type == ROOMINF || type == PULLMSGS)
-        {
-            vecLength = 12;
-        }
-        vec.resize(vecLength);
+        resizeVec();
     }
 
     /*
-     * konstruktor dla typów o zmiennej długości
+     * konstruktor dla typów o zmiennej długości treści wiadomości (podawana długość bajtowa treści wiadomości)
      */
     Message(messageType type, int length)
     {
         this->type = type;
-        if (type == MSGSER)
-        {
-            vecLength = 46 + length;
-        }
-        else if  (type == MSGCLI)
-        {
-            vecLength = 38 + length;
-        }
-        else
-        {
-            LOG(INFO) << "błędny typ pakietu (podana długość dla pakietu o stałej długości)";
-            this->type = ERR;
-        }
-        vec.resize(vecLength);
+        resizeVec(length);
     }
 
+    /*
+     * konstruktor dla FLP_Read
+     */
+    Message(uint8_t *data, size_t length)
+    {
+        vec.assign (data,data+length);
+    }
+
+
+    /*
+     * settery i gettery
+     */
     int getRoomID()
     {
         if (type == ERR)
@@ -94,7 +80,7 @@ public:
         }
         else
         {
-            toVec(id, 0, 3);
+            intToVec(id, 0, 3);
         }
     }
 
@@ -112,7 +98,7 @@ public:
     {
         if (type == SUBREF)
         {
-            toVec(reason, 4, 7);
+            intToVec(reason, 4, 7);
         }
         else LOG(INFO) << "błędny typ Message dla setReason";
     }
@@ -135,11 +121,11 @@ public:
     {
         if (type == ROOMINF)
         {
-            toVec(id, 4, 7);
+            intToVec(id, 4, 7);
         }
         else if (type == PULLMSGS)
         {
-            toVec(id, 8, 11);
+            intToVec(id, 8, 11);
         }
         else LOG(INFO) << "błędny typ Message dla setLastMessageID";
     }
@@ -158,7 +144,7 @@ public:
     {
         if (type == ROOMINF)
         {
-            toVec(num, 8, 11);
+            intToVec(num, 8, 11);
         }
         else LOG(INFO) << "błędny typ Message dla setLastMessageID";
     }
@@ -177,22 +163,128 @@ public:
     {
         if (type == PULLMSGS)
         {
-            toVec(id, 4, 7);
+            intToVec(id, 4, 7);
         }
         else LOG(INFO) << "błędny typ Message dla setFirstMessageID";
     }
 
-    int setMessage()
+    int getMessageID()
     {
         if (type == MSGSER)
         {
+            return toInt(8, 11);
+        }
+        LOG(INFO) << "błędny tym Message dla getMessageID";
+        return -1;
+    }
 
+    void setMessageID(int id)
+    {
+        if (type == MSGSER)
+        {
+            intToVec(id, 8, 11);
+        }
+        else LOG(INFO) << "błędny typ Message dla setMessageID";
+    }
+
+    int getTime()
+    {
+        if (type == MSGSER)
+        {
+            return toInt(12, 15);
+        }
+        LOG(INFO) << "błędny tym Message dla getTime";
+        return -1;
+    }
+
+    void setTime(int timestamp)
+    {
+        if (type == MSGSER)
+        {
+            intToVec(timestamp, 12, 15);
+        }
+        else LOG(INFO) << "błędny typ Message dla setTime";
+    }
+
+    string getNick()
+    {
+        if (type == MSGSER)
+        {
+            return toString(12, 43);
         }
         else if (type == MSGCLI)
         {
-
+            return toString(4, 35);
         }
-        else
+        LOG(INFO) << "błędny typ Message dla getNick";
+        return NULL;
+    }
+
+    void setNick(string nick)
+    {
+        if (type == MSGSER)
+        {
+            stringToVec(nick, 12, 43);
+        }
+        else if (type == MSGCLI)
+        {
+            stringToVec(nick, 4, 35);
+        }
+        else LOG(INFO) << "błędny typ Message dla setNick";
+    }
+
+    int getMessageLength()
+    {
+        if (type == MSGSER)
+        {
+            return toInt(44, 45);
+        }
+        else if (type == MSGCLI)
+        {
+            return toInt(36, 37);
+        }
+        LOG(INFO) << "błędny typ Message dla getMessageLength";
+        return -1;
+    }
+
+    void setMessageLength(int length)
+    {
+        if (type == MSGSER)
+        {
+            intToVec(length, 44, 45);
+        }
+        else if (type == MSGCLI)
+        {
+            intToVec(length, 36, 37);
+        }
+        else LOG(INFO) << "błędny typ Message dla setMessageLength";
+    }
+
+    string getMessage()
+    {
+        if (type == MSGSER)
+        {
+            return toString(46, 46+getMessageLength());
+        }
+        else if (type == MSGCLI)
+        {
+            return toString(38, 38+getMessageLength());
+        }
+        LOG(INFO) << "błędny typ Message dla getMessage";
+        return NULL;
+    }
+
+    void setMessage(string msg)
+    {
+        if (type == MSGSER)
+        {
+            stringToVec(msg, 46, 46+getMessageLength());
+        }
+        else if (type == MSGCLI)
+        {
+            stringToVec(msg, 38, 38+getMessageLength());
+        }
+        else LOG(INFO) << "błędny typ Message dla setMessage";
     }
 
 
@@ -215,12 +307,82 @@ private:
      * konwertuje inta na bajty i zapisuje je w podany zakres
      * (WAŻNE - int to 4 bajty, brak kontroli tego)
      */
-    void toVec(int value, int first, int last)
+    void intToVec(int value, int first, int last)
     {
         for (int i=first; i<=last; ++i)
         {
             vec[i] = (uint8_t) ((value >> 8*(i-first)) & 0xFF);
         }
+    }
+
+    /*
+     * konwertuje zakres bajtów z vectora do stringa i go zwraca
+     */
+    string toString(int first, int last)
+    {
+        string str;
+        for (int i=first; i<=last; ++i)
+        {
+            str.push_back(vec[i]);
+        }
+        return str;
+    }
+
+    /*
+     * konwertuje stringa na bajty i zapisuje je w podany zakres
+     */
+    void stringToVec(string str, int first, int last)
+    {
+        int k = 0;
+        for (std::string::iterator it=str.begin(); it!=str.end(); ++it)
+        {
+            vec[first+k] = *it;
+            ++k;
+            if (k>last) break;
+        }
+    }
+
+    /*
+     * dopasowuje dlugosc wektora dla stalej lub zmiennej dlugosci
+     */
+    void resizeVec()
+    {
+        if (type == MSGSER || type ==MSGCLI)
+        {
+            LOG(INFO) << "nie podano długości dla Message o zmiennej długości!";
+            this->type = ERR;
+            vecLength = 0;
+        }
+        else if (type == SUBREQ || type == SUBACK || type == UNSUB || type == GETINF)
+        {
+            vecLength = 4;
+        }
+        else if (type == SUBREF)
+        {
+            vecLength = 8;
+        }
+        else if (type == ROOMINF || type == PULLMSGS)
+        {
+            vecLength = 12;
+        }
+        vec.resize(vecLength);
+    }
+    void resizeVec(int length)
+    {
+        if (type == MSGSER)
+        {
+            vecLength = 46 + length;
+        }
+        else if  (type == MSGCLI)
+        {
+            vecLength = 38 + length;
+        }
+        else
+        {
+            LOG(INFO) << "błędny typ pakietu (podana długość dla pakietu o stałej długości)";
+            this->type = ERR;
+        }
+        vec.resize(vecLength);
     }
 };
 

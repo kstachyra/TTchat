@@ -5,15 +5,20 @@
 
 using namespace std;
 
-class Conversation
+class Chatroom
 {
+public:
     //identyfikator rozmowy
     int id;
 
+private:
     //lista identyfikatorów klientów należących do rozmowy
-    list < int > clientList;
+    list < FLP_Connection_t* > clientList;
 
-    //messageQueue...
+    std::queue < Message > chatroomQueue;
+    std::mutex chatroomMutex;
+
+    std::thread chatroomThread;
 };
 
 #endif //TTCHAT_CONVERSATION_H

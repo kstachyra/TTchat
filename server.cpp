@@ -3,10 +3,9 @@
 
 #include "easylogging++.h"
 #include "ClientMonitor.h"
-#include "Connection.h"
-#include "Message.h"
+#include "flp/flp.h"
 
-#define ELPP_THREAD_SAFE 1
+#define ELPP_THREAD_SAFE
 INITIALIZE_EASYLOGGINGPP
 
 using namespace std;
@@ -14,6 +13,7 @@ using namespace std;
 void easyLoggingInit(string const& confPath);
 
 void serverListenThread(int port);
+void serverServiceThread();
 
 //monitor klientów
 ClientMonitor clientMonitor;
@@ -24,10 +24,18 @@ int main(int argc,  char* argv[])
 	easyLoggingInit("/home/ks/ClionProjects/TTchat/easyLogging.conf");
 
     //uruchomienie wątku nasłuchującego na nowe połączenia
-	thread listenThread(serverListenThread, 1234);
+    thread listenThread(serverListenThread, 1234);
+    //uruchomienie wątku serwisowego
+    thread serviceThread(serverServiceThread);
+
+
+
+
+
 
     //poczekaj na wątki
     if (listenThread.joinable()) listenThread.join();
+    if (serviceThread.joinable()) serviceThread.join();
 
 
 	return 0;
@@ -49,41 +57,32 @@ void serverListenThread(int port)
 {
     LOG(INFO) << "wątek nasłuchujący na połączenia uruchomiony";
 
-    Connection con(port);
-    LOG(INFO) << "utworzono połączenie dla wątku nasłuchującego";
+    bool isRunning = 1;
+    FLP_Connection_t *newConnection;
 
-    Message x(Message::GETINF);
-    //x = con.getMessage();
+    //while(isRunning)
+    {
+        //isRunning = FLP_Listen(&newConnection, port);
 
-    x.setRoomID(156);
-    cout<<"\n\nDSDS"<<x.getRoomID();
-    x.setRoomID(55555);
-    cout<<"\n\nDSDS"<<x.getRoomID();
-    x.setRoomID(159482637);
-    cout<<"\n\nDSDS"<<x.getRoomID();
+        //jeśli podany klucz newConnection nie istnieje w mapie
+        if (clientMonitor.clients.find(newConnection) == clientMonitor.clients.end())
+        {
+            clientMonitor.addClient(newConnection);
+            LOG(INFO) << "dodano klienta do monitora klientów";
+        }
+        //jeśli istnieje już
+        else
+        {
+            LOG(INFO) << "klient próbujący nawiązać połączenie na port nasłuchujący już istnieje na liście";
+        }
 
-
-
-
-
+        LOG(INFO) << "usuwamy klienta z monitora przy pomocy removeClient";
+        clientMonitor.removeClient(newConnection);
+        LOG(INFO) << "usunięto klienta";
+    }
 }
 
-void conversationThread()
-{
-
-}
-
-void clientReciverThread()
-{
-
-}
-
-void clientTransmitterThread()
-{
-
-}
-
-void serviceThread()
+void serverServiceThread()
 {
     LOG(INFO) << "uruchomiono wątek serwisowy";
 }

@@ -12,7 +12,7 @@
 
 #include "Monitor.h"
 #include "Client.h"
-#include "Conversation.h"
+#include "Chatroom.h"
 
 using namespace std;
 
@@ -20,30 +20,57 @@ using namespace std;
 class ClientMonitor : private Monitor
 {
 public:
-    /*int clientCount;
-    int conversationCount;*/
-
     //mapa identyfikator klienta -> klient
-    unordered_map < int, Client > clients;
+    unordered_map < FLP_Connection_t*, Client* > clients;
 
     //mapa aktywnych rozmów id rozmowy -> rozmowa
-    unordered_map < int, Conversation > conversations;
+    unordered_map < int, Chatroom > chatrooms;
 
 public:
-    //ClientMonitor() : clientCount(0), conversationCount(0) {}
 
-    int addClient()
+    int addClient(FLP_Connection_t * connection)
     {
         enter();
-        Client newClient;
-        //potrzebne parametry klienta
-        //stworzyć konkstruktor dla klienta
-        clients[newClient.id] = newClient;
+
+        Client* newClient = new Client(connection);
+        clients[connection] = newClient;
+        newClient->runThreads();
+
         leave();
 
         return 0;
     }
-};
 
+    int removeClient(FLP_Connection_t * connection)
+    {
+        enter();
+
+        //jeśli klient nie istnieje w mapie
+        if (clients.find(connection) == clients.end())
+        {
+            LOG(INFO) << "klient, którego chcemy usunąć nie istnieje w mapie";
+        }
+        else
+        {
+            //W MONITORZE NIE JOINOWAĆ !!!
+            clients[connection]->joinThreads();
+            LOG (INFO) <<"zjoinowano w monitorze";
+
+            //zwalniamy pamięć tego klienta
+            delete clients[connection];
+
+            //usuwamy wpis klienta z listy
+            clients.erase(connection);
+        }
+
+        leave();
+    }
+
+    void setChatroomId(FLP_Connection_t *connection)
+    {
+        cout<<clients[connection]->chatroomId;
+    }
+
+};
 
 #endif //TTCHAT_CLIENTMONITOR_H
