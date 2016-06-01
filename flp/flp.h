@@ -57,7 +57,7 @@ typedef struct {
 
 /* Exported functions ------------------------------------------------------ */
 bool FLP_ListenerInit(FLP_Listener_t *listener, unsigned short port, char *host);
-bool FLP_ListenerDeinit(FLP_Listener_t *listener);
+void FLP_ListenerDeinit(FLP_Listener_t *listener);
 bool FLP_Listen(FLP_Listener_t *listener, FLP_Connection_t **connection, unsigned short timeoutMs);
 bool FLP_Write(FLP_Connection_t *connection, uint8_t *data, size_t length);
 bool FLP_Read(FLP_Connection_t *connection, uint8_t **data, size_t *length);

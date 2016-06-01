@@ -34,6 +34,8 @@ int main(int argc, char *argv[])
 	unsigned short port = 1234;
 	FLP_Listener_t FLP_Listener;
 	FLP_Connection_t *FLP_Connection;
+	uint8_t *message = (uint8_t*)"Tajna wiadomosc.\n";
+	size_t receivedMessageLength;
 
 	struct sigaction act;
 
@@ -58,13 +60,44 @@ int main(int argc, char *argv[])
 			// Check if new connection was established or timeout occurred
 			if(FLP_Connection) {
 				printf("New connection established.\n");
+
+				printf("Sending message: ");
+				unsigned int i;
+				for(i=0; i<strlen((char*)message); i++) {
+					printf("%02x", message[i]);
+				}
+				printf("\n");
+
+				if(FLP_Write(FLP_Connection, message, strlen((char*)message))) {
+					printf("Message sent successfully.\n");
+				} else {
+					printf("Sending message failed.\n");
+				}
+
+				printf("Trying to read message...");
+				if(FLP_Read(FLP_Connection, &message, &receivedMessageLength)) {
+					printf("Message read successfully.\n");
+				} else {
+					printf("Reading message failed.\n");
+				}
+
+				printf("Received message: ");
+				for(i=0; i<receivedMessageLength; i++) {
+					printf("%02x", message[i]);
+				}
+				printf("\n");
+
+				while(!exit_request);
+
+				return EXIT_SUCCESS;
+
 			} else if(exit_request) {
 				return EXIT_SUCCESS;
 			}
 
 		} else {
 
-			printf("FLP_Listen failed\n");
+			printf("Could not establish new connection.\n");
 			return 0;
 		}
 
