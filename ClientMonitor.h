@@ -16,7 +16,6 @@
 
 using namespace std;
 
-
 class ClientMonitor : private Monitor
 {
 public:
@@ -95,5 +94,7 @@ public:
         return clients[clientId]->chatroomId;
     }
 };
+
+ClientMonitor clientMonitor;
 
 #endif //TTCHAT_CLIENTMONITOR_H

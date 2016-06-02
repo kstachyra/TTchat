@@ -155,10 +155,7 @@ void Client::transmitterThreadFunc()
         }
     }*/
 
-    for (int i=0; i<1000; ++i)
-    {
-        int x = 44*444;
-    }
+    sleep(10);
     std::cout <<"\n"<< "wątek transmitter KOŃCZY PRACĘ dla klienta " << id;
 }
 
@@ -187,11 +184,8 @@ void Client::receiverThreadFunc()
         else break; //isRunning == 0
     }*/
 
-    for (int i=0; i<1000; ++i)
-    {
-        //std::cout <<"\n"<< "pracuje wątek receiverThread" << this;
-        int x = 555*555;
-    }
+
+    sleep(10);
     std::cout <<"\n"<< "wątek receiver KOŃCZY PRACĘ dla klienta " << id;
 }
 

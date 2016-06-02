@@ -9,9 +9,6 @@ using namespace std;
 void serverListenThread(int port);
 void serverServiceThread();
 
-//monitor klientów
-ClientMonitor clientMonitor;
-
 int main(int argc,  char* argv[])
 {
     //uruchomienie wątku nasłuchującego na nowe połączenia
@@ -67,10 +64,12 @@ void serverListenThread(int port)
         }
     }
 
+
     for (auto it = clientMonitor.clients.begin(); it != clientMonitor.clients.end();)
     {
         auto temp = it;
         temp++;
+        sleep(5);
         //std::cout <<"\n"<< "Usuwam klienta";
         clientMonitor.removeClient(it->first);
         it = temp;

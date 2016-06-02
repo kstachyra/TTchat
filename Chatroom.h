@@ -19,8 +19,6 @@ private:
 
     //kolejka wiadomości do obsłużenia przez wątek chatroomu
     std::queue < Message > chatroomQueue;
-    std::mutex chatroomMutex;
-    std::mutex chatroomEmpty;
 
     std::thread chatroomThread;
 
@@ -61,6 +59,7 @@ public:
 
 private:
     void chatroomThreadFunc();
+    void manageQueueMassages();
 };
 
 void Chatroom::chatroomThreadFunc()
@@ -70,30 +69,44 @@ void Chatroom::chatroomThreadFunc()
     //tu przechowujemy informacje o tym, czy ostatnio lista byla pusta
     bool listEmpty;
 
-    do
+    while(1)
     {
-        //zapisujemy tu informacje o ostatnim stanie pustosci listy
-        listMutex.lock();
-        listEmpty = this->clientList.empty();
-        listMutex.unlock();
-
         listMutex.lock();
         //dla każdego klienta w rozmowie
         for (auto it = clientList.begin(); it != clientList.end(); ++it)
         {
-            //clientMonitor.clients[(*iterator)];
-            //!!!TODO pobieraj przychdzace do swojej kolejki
             std::queue < Message > tempQueue;
-            //clientMonitor.clients[(*it)]->getFromReceiver(tempQueue);
+            //!!!TODO AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA clieMonitor zrobić dostęp :S
+            std::cout << "\n" << "pobieram wiadomości z receiverQueue dla klienta " << *it;
+            /*clientMonitor.clients[(*it)]->getFromReceiver(&tempQueue);*/
+
+            //dla wszystkich nowopobranych wiadomości
+            while (!tempQueue.empty())
+            {
+                //włóż je do kolejki chatroomu
+                chatroomQueue.push(tempQueue.front());
+                //usuń z tymczasowej
+                tempQueue.pop();
+            }
         }
+        std::cout << "\n" << "watek czatroomu" << id << " pracuje sobie i ma klientow: " << clientList.size();
+        //odblokuj listę, żeby w trakcie manageQueueMassages był do niej dostęp na dodawanie i odejmowanie klientów
         listMutex.unlock();
 
-        //!!!TODO ogarniaj co trzeba zrobic ze wszystkimi wiaodmosciami aż wszystkie obsłużysz
+        manageQueueMassages();
 
-        std::cout << "\n" << "watek czatroomu" << id << " pracuje sobie i ma klientow: " << clientList.size();
-
-    } while(!listEmpty);
+        //zapisujemy tu informacje o ostatnim stanie pustosci listy
+        listMutex.lock();
+        if (clientList.empty()) break;
+        listMutex.unlock();
+    }
     std::cout << "\n" << "wątek chatroomu kończy pracę " << id;
+}
+
+void Chatroom::manageQueueMassages()
+{
+    sleep(1);
+    //!!!TODO ogarniaj co trzeba zrobic ze wszystkimi wiaodmosciami aż wszystkie obsłużysz
 }
 
 
