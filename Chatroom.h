@@ -57,9 +57,19 @@ public:
         listMutex.unlock();
     }
 
+    bool isEmpty()
+    {
+        bool toReturn = 0;
+        listMutex.lock();
+        if (clientList.empty()) toReturn = 1;
+        listMutex.unlock();
+        //żeby uniknąć nie odblokowania mutexa
+        return toReturn;
+    }
+
 private:
     void chatroomThreadFunc();
-    void manageQueueMassages();
+    void manageQueueMessages();
 };
 
 void Chatroom::chatroomThreadFunc()
@@ -67,7 +77,7 @@ void Chatroom::chatroomThreadFunc()
     std::cout << "\n" << "uruchomiono wątek chatroomu " << id;
 
     //tu przechowujemy informacje o tym, czy ostatnio lista byla pusta
-    bool listEmpty;
+    bool toStop=0;
 
     while(1)
     {
@@ -77,7 +87,7 @@ void Chatroom::chatroomThreadFunc()
         {
             std::queue < Message > tempQueue;
             //!!!TODO AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA clieMonitor zrobić dostęp :S
-            std::cout << "\n" << "pobieram wiadomości z receiverQueue dla klienta " << *it;
+            std::cout << "\n" << "ja chatroom " << id << " pobieram wiadomości z receiverQueue dla klienta " << *it;
             /*clientMonitor.clients[(*it)]->getFromReceiver(&tempQueue);*/
 
             //dla wszystkich nowopobranych wiadomości
@@ -89,24 +99,32 @@ void Chatroom::chatroomThreadFunc()
                 tempQueue.pop();
             }
         }
-        std::cout << "\n" << "watek czatroomu" << id << " pracuje sobie i ma klientow: " << clientList.size();
+        std::cout << "\n" << "watek czatroomu " << id << " pracuje sobie i ma klientow: " << clientList.size();
         //odblokuj listę, żeby w trakcie manageQueueMassages był do niej dostęp na dodawanie i odejmowanie klientów
         listMutex.unlock();
 
-        manageQueueMassages();
+        manageQueueMessages();
 
         //zapisujemy tu informacje o ostatnim stanie pustosci listy
         listMutex.lock();
-        if (clientList.empty()) break;
+        if (clientList.empty()) toStop = 1;
         listMutex.unlock();
+        //żeby uniknąć nie odblokowania mutexa
+        if (toStop) break;
     }
     std::cout << "\n" << "wątek chatroomu kończy pracę " << id;
 }
 
-void Chatroom::manageQueueMassages()
+void Chatroom::manageQueueMessages()
 {
     sleep(1);
     //!!!TODO ogarniaj co trzeba zrobic ze wszystkimi wiaodmosciami aż wszystkie obsłużysz
+
+    /*while (!chatroomQueue.empty())
+    {
+        chatroomQueue.front();
+        chatroomQueue.pop();
+    }*/
 }
 
 

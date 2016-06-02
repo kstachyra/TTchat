@@ -37,10 +37,8 @@ public:
         //jeśli nie ma takiego chatroomu
         if(chatrooms.find(chatroomId) == chatrooms.end())
         {
-            //to twórz
-            Chatroom* newChatroom = new Chatroom(chatroomId);
-            //wstaw do mapy chatroomów
-            chatrooms[chatroomId]=newChatroom;
+            //to stwórz
+            addChatroom(chatroomId);
             //dodajdo klienta do chatroomu
             chatrooms[chatroomId]->addClient(clientId);
             //i uruchom wątek chatroomu
@@ -58,7 +56,7 @@ public:
         leave();
     }
 
-    int removeClient(FLP_Connection_t * clientId)
+    void removeClient(FLP_Connection_t * clientId)
     {
         enter();
 
@@ -69,20 +67,27 @@ public:
         }
         else
         {
-            //zamknij połączenie (FLP_Read i FLP_Write zwrócą błąd, wątki klienta skończą pracę)
+            //zamknij połączenie (FLP_Read i FLP_Write zwrócą błąd, wątki klienta skończą pracę niebawem)
             ////TODO FLP_Close(clientId);
 
             //TODO joinować czy detachować?
-            clients[clientId]->detachThreads();
-            //clients[clientId]->joinThreads();
+            //clients[clientId]->detachThreads();
+            clients[clientId]->joinThreads();
 
             //usuń klienta z chatroomu
             chatrooms[clients[clientId]->chatroomId]->removeClient(clientId);
 
+            //sprawdzamy, czy nie usunąć chatroomu (czy nie był to ostatni klient tego chatroomu)
+            if (chatrooms[clients[clientId]->chatroomId]->isEmpty())
+            {
+                chatrooms[clients[clientId]->chatroomId]->joinThread();
+                removeChatroom(clients[clientId]->chatroomId);
+            }
+
             //zwalniamy pamięć tego klienta
             delete clients[clientId];
 
-            //usuwamy wpis klienta z listy
+            //usuwamy wpis klienta z mapy
             clients.erase(clientId);
         }
 
@@ -91,7 +96,28 @@ public:
 
     uint64_t getChatroomId(FLP_Connection_t *clientId)
     {
-        return clients[clientId]->chatroomId;
+        //dostęp do elementów monitora musi być chroniony
+        enter();
+        uint64_t toReturn = clients[clientId]->chatroomId;
+        leave();
+        return toReturn;
+    }
+
+private:
+    void addChatroom(uint64_t chatroomId)
+    {
+        Chatroom* newChatroom = new Chatroom(chatroomId);
+        //wstaw do mapy chatroomów
+        chatrooms[chatroomId]=newChatroom;
+    }
+
+    void removeChatroom(uint64_t chatroomId)
+    {
+        //zwalniamy pamięć tego chatroomu
+        delete chatrooms[chatroomId];
+
+        //usuwamy wpis chatroomu z mapy
+        chatrooms.erase(chatroomId);
     }
 };
 

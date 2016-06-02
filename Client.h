@@ -155,7 +155,7 @@ void Client::transmitterThreadFunc()
         }
     }*/
 
-    sleep(10);
+    sleep(5);
     std::cout <<"\n"<< "wątek transmitter KOŃCZY PRACĘ dla klienta " << id;
 }
 
@@ -185,7 +185,7 @@ void Client::receiverThreadFunc()
     }*/
 
 
-    sleep(10);
+    sleep(5);
     std::cout <<"\n"<< "wątek receiver KOŃCZY PRACĘ dla klienta " << id;
 }
 
