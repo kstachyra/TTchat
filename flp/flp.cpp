@@ -68,7 +68,7 @@ FLP_Connection_t* FLP_Connect(int socket)
 		return NULL;
 	}
 
-	// Perform FLP handshake (establish connection and exchange keys)
+	// Perform FLP handshake (establish id and exchange keys)
 	result = FLP_Handshake(connection);
 	if(!result) {
 		free(connection);
@@ -89,7 +89,7 @@ bool FLP_Write(FLP_Connection_t *connection, uint8_t *data, size_t length)
 	uint8_t *encryptedData;
 	size_t encryptedDataLength;
 
-	// Check connection state
+	// Check id state
 	if(connection->state != FLP_CONNECTED) return false;
 
 	// TODO: Encrypt data
@@ -134,7 +134,7 @@ bool FLP_Read(FLP_Connection_t *connection, uint8_t **data, size_t *length)
 	*length = 0;
 	*data = NULL;
 
-	// Check connection state
+	// Check id state
 	if(connection->state != FLP_CONNECTED) return false;
 
 	// Block on queue and termination request simultaneously
@@ -173,7 +173,7 @@ bool FLP_Close(FLP_Connection_t *connection)
 	// Close TCP socket
 	if(close(connection->socket) < 0) return false;
 
-	// Free memory used for connection structure
+	// Free memory used for id structure
 	free(connection);
 
 	return true;
@@ -420,7 +420,7 @@ static bool FLP_Handshake(FLP_Connection_t *connection)
 	if(!FLP_Receive(connection, publicKey, FLP_PUBLIC_KEY_LENGTH)) return false;
 
 	// Generate symmetrical key
-	//FLP_GenerateSessionKey(connection->sessionKey);
+	//FLP_GenerateSessionKey(id->sessionKey);
 	/* ZAKOMENTOWANA FUNKCJA! ! ! */
 
 	// TODO: Encrypt generated key
@@ -433,7 +433,7 @@ static bool FLP_Handshake(FLP_Connection_t *connection)
 	if(!FLP_ReceiveHeader(connection, &header)) return false;
 	if(header.type != FLP_SET_ACK_BIT(FLP_TYPE_SERVER_HELLO) || header.length != 0) return false;
 
-	// Change state of the connection
+	// Change state of the id
 	connection->state = FLP_CONNECTED;
 
 	return true;

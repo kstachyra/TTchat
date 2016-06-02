@@ -66,7 +66,7 @@ public:
     {
         if (type == ERR)
         {
-            LOG(INFO) << "nie można odczytać RoomID dla Message typu ERR";
+            std::cout <<"\n"<< "nie można odczytać RoomID dla Message typu ERR";
             return -1;
         }
         return toInt(0, 3);
@@ -76,7 +76,7 @@ public:
     {
         if (type == ERR)
         {
-            LOG(INFO) << "nie można ustawić RoomID dla Message typu ERR";
+            std::cout <<"\n"<< "nie można ustawić RoomID dla Message typu ERR";
         }
         else
         {
@@ -90,7 +90,7 @@ public:
         {
             return toInt(4, 7);
         }
-        LOG(INFO) << "błędny typ Message dla getReason";
+        std::cout <<"\n"<< "błędny typ Message dla getReason";
         return -1;
     }
 
@@ -100,7 +100,7 @@ public:
         {
             intToVec(reason, 4, 7);
         }
-        else LOG(INFO) << "błędny typ Message dla setReason";
+        else std::cout <<"\n"<< "błędny typ Message dla setReason";
     }
 
     int getLastMessageID()
@@ -113,7 +113,7 @@ public:
         {
             return toInt(8, 11);
         }
-        LOG(INFO) << "błędny typ Message dla getLastMessageID";
+        std::cout <<"\n"<< "błędny typ Message dla getLastMessageID";
         return -1;
     }
 
@@ -127,7 +127,7 @@ public:
         {
             intToVec(id, 8, 11);
         }
-        else LOG(INFO) << "błędny typ Message dla setLastMessageID";
+        else std::cout <<"\n"<< "błędny typ Message dla setLastMessageID";
     }
 
     int getNumberOFMessages()
@@ -136,7 +136,7 @@ public:
         {
             return toInt(8, 11);
         }
-        LOG(INFO) << "błędny typ Message dla getLastMessageID";
+        std::cout <<"\n"<< "błędny typ Message dla getLastMessageID";
         return -1;
     }
 
@@ -146,7 +146,7 @@ public:
         {
             intToVec(num, 8, 11);
         }
-        else LOG(INFO) << "błędny typ Message dla setLastMessageID";
+        else std::cout <<"\n"<< "błędny typ Message dla setLastMessageID";
     }
 
     int getFirstMessageID()
@@ -155,7 +155,7 @@ public:
         {
             return toInt(4, 7);
         }
-        LOG(INFO) << "błędny typ Message dla getFirstMessageID";
+        std::cout <<"\n"<< "błędny typ Message dla getFirstMessageID";
         return -1;
     }
 
@@ -165,7 +165,7 @@ public:
         {
             intToVec(id, 4, 7);
         }
-        else LOG(INFO) << "błędny typ Message dla setFirstMessageID";
+        else std::cout <<"\n"<< "błędny typ Message dla setFirstMessageID";
     }
 
     int getMessageID()
@@ -174,7 +174,7 @@ public:
         {
             return toInt(8, 11);
         }
-        LOG(INFO) << "błędny tym Message dla getMessageID";
+        std::cout <<"\n"<< "błędny tym Message dla getMessageID";
         return -1;
     }
 
@@ -184,7 +184,7 @@ public:
         {
             intToVec(id, 8, 11);
         }
-        else LOG(INFO) << "błędny typ Message dla setMessageID";
+        else std::cout <<"\n"<< "błędny typ Message dla setMessageID";
     }
 
     int getTime()
@@ -193,7 +193,7 @@ public:
         {
             return toInt(12, 15);
         }
-        LOG(INFO) << "błędny tym Message dla getTime";
+        std::cout <<"\n"<< "błędny tym Message dla getTime";
         return -1;
     }
 
@@ -203,7 +203,7 @@ public:
         {
             intToVec(timestamp, 12, 15);
         }
-        else LOG(INFO) << "błędny typ Message dla setTime";
+        else std::cout <<"\n"<< "błędny typ Message dla setTime";
     }
 
     string getNick()
@@ -216,7 +216,7 @@ public:
         {
             return toString(4, 35);
         }
-        LOG(INFO) << "błędny typ Message dla getNick";
+        std::cout <<"\n"<< "błędny typ Message dla getNick";
         return NULL;
     }
 
@@ -230,7 +230,7 @@ public:
         {
             stringToVec(nick, 4, 35);
         }
-        else LOG(INFO) << "błędny typ Message dla setNick";
+        else std::cout <<"\n"<< "błędny typ Message dla setNick";
     }
 
     int getMessageLength()
@@ -243,7 +243,7 @@ public:
         {
             return toInt(36, 37);
         }
-        LOG(INFO) << "błędny typ Message dla getMessageLength";
+        std::cout <<"\n"<< "błędny typ Message dla getMessageLength";
         return -1;
     }
 
@@ -257,7 +257,7 @@ public:
         {
             intToVec(length, 36, 37);
         }
-        else LOG(INFO) << "błędny typ Message dla setMessageLength";
+        else std::cout <<"\n"<< "błędny typ Message dla setMessageLength";
     }
 
     string getMessage()
@@ -270,7 +270,7 @@ public:
         {
             return toString(38, 38+getMessageLength());
         }
-        LOG(INFO) << "błędny typ Message dla getMessage";
+        std::cout <<"\n"<< "błędny typ Message dla getMessage";
         return NULL;
     }
 
@@ -284,7 +284,7 @@ public:
         {
             stringToVec(msg, 38, 38+getMessageLength());
         }
-        else LOG(INFO) << "błędny typ Message dla setMessage";
+        else std::cout <<"\n"<< "błędny typ Message dla setMessage";
     }
 
 
@@ -349,7 +349,7 @@ private:
     {
         if (type == MSGSER || type ==MSGCLI)
         {
-            LOG(INFO) << "nie podano długości dla Message o zmiennej długości!";
+            std::cout <<"\n"<< "nie podano długości dla Message o zmiennej długości!";
             this->type = ERR;
             vecLength = 0;
         }
@@ -379,7 +379,7 @@ private:
         }
         else
         {
-            LOG(INFO) << "błędny typ pakietu (podana długość dla pakietu o stałej długości)";
+            std::cout <<"\n"<< "błędny typ pakietu (podana długość dla pakietu o stałej długości)";
             this->type = ERR;
         }
         vec.resize(vecLength);
