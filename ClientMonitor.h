@@ -80,7 +80,7 @@ public:
             //sprawdzamy, czy nie usunąć chatroomu (czy nie był to ostatni klient tego chatroomu)
             if (chatrooms[clients[clientId]->chatroomId]->isEmpty())
             {
-                std::cout << "\n" << "BYŁ TO OSTATNI KLIENT, USUWAM CHATROOM";
+                std::cout << "\n" << "BYŁ TO OSTATNI KLIENT, USUWAM CHATROOM " << clients[clientId]->chatroomId;
                 chatrooms[clients[clientId]->chatroomId]->joinThread();
                 removeChatroom(clients[clientId]->chatroomId);
             }
@@ -114,6 +114,7 @@ private:
 
     void removeChatroom(uint64_t chatroomId)
     {
+        std::cout << "\n" << "usuwam chatroom " << chatrooms[chatroomId]->id;
         //zwalniamy pamięć tego chatroomu
         delete chatrooms[chatroomId];
 
