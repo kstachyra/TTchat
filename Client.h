@@ -29,7 +29,7 @@ private:
     std::thread receiverThread;
 
 public:
-    Client()
+    /*Client()
     {
         id = NULL;
         chatroomId = 0xFFFFFFFF;
@@ -37,9 +37,9 @@ public:
         //początkowe wartości mutexów empty na zablokowane
         transmitterEmpty.lock();
         //receiverEmpty.lock();
-    }
+    }*/
 
-    Client(FLP_Connection_t * con)
+    /*Client(FLP_Connection_t * con)
     {
         this->id = con;
         chatroomId = 0xFFFFFFFF;
@@ -47,7 +47,7 @@ public:
         //początkowe wartości mutexów empty na zablokowane
         transmitterEmpty.lock();
         //receiverEmpty.lock();
-    }
+    }*/
 
     Client(FLP_Connection_t * con, uint64_t chatId)
     {

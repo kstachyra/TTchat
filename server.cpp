@@ -74,6 +74,7 @@ void serverListenThread(int port)
         sleep(5);
         std::cout <<"\n"<< "Usuwam klienta " << (*it).first;
         clientMonitor.removeClient(it->first);
+        std::cout <<"\n"<< "Usunieto klienta " << (*it).first;
         it = temp;
     }
 }

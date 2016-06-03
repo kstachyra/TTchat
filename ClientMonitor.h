@@ -31,7 +31,7 @@ public:
         enter();
 
         //tworz nowy obiekt klienta
-        Client* newClient = new Client(clientId);
+        Client* newClient = new Client(clientId, chatroomId);
         clients[clientId] = newClient;
 
         //jeśli nie ma takiego chatroomu
@@ -80,6 +80,7 @@ public:
             //sprawdzamy, czy nie usunąć chatroomu (czy nie był to ostatni klient tego chatroomu)
             if (chatrooms[clients[clientId]->chatroomId]->isEmpty())
             {
+                std::cout << "\n" << "BYŁ TO OSTATNI KLIENT, USUWAM CHATROOM";
                 chatrooms[clients[clientId]->chatroomId]->joinThread();
                 removeChatroom(clients[clientId]->chatroomId);
             }
