@@ -47,15 +47,14 @@ void serverListenThread(int port)
 
     //while(isRunning)
     for (int i=0; i<5; ++i) //na razie tylko i klientów tworzymy, potem to będzie zależeć od FLP_Listen
-    {////TODO
+    {
         sleep(2);
         isRunning = FLP_Listen(&newConnection, port);
-        newConnection++;
 
         //jeśli podany klucz newConnection nie istnieje w mapie
         if (clientMonitor.clients.find(newConnection) == clientMonitor.clients.end())
         {
-            clientMonitor.addClient(newConnection, 0xFFFFFFFF-(i%2)); //modulo na potrzeby testów  ---usunąć!
+            clientMonitor.addClient(newConnection, 0xFFFFFFFF);
             std::cout <<"\n"<< "dodano klienta " << newConnection << " do monitora klientów";
         }
         //jeśli istnieje już
@@ -74,7 +73,7 @@ void serverListenThread(int port)
         sleep(5);
         std::cout <<"\n"<< "Usuwam klienta " << (*it).first;
         clientMonitor.removeClient(it->first);
-        std::cout <<"\n"<< "Usunieto klienta " << (*it).first;
+
         it = temp;
     }
 }

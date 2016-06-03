@@ -166,10 +166,10 @@ void Client::receiverThreadFunc()
     bool isRunning = 1;
     Message msg;
 
-    /*while (1)
+    while (1)
     {
         //przeczytaj wiadomość i zapisz ją do msg
-        ////TODO isRunning = FLP_Read(id, &data, &length);
+        isRunning = FLP_Read(id, &data, &length);
         if (isRunning) //jeśli odczytana poprawnie
         {
             msg = Message(data, length);
@@ -182,7 +182,7 @@ void Client::receiverThreadFunc()
             receiverMutex.unlock();
         }
         else break; //isRunning == 0
-    }*/
+    }
 
 
     sleep(5);

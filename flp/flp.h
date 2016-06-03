@@ -11,7 +11,7 @@ typedef struct
 	bool stop;
 } FLP_Connection_t;
 
-FLP_Connection_t * FLP_Listen(int socket);
+bool FLP_Listen(FLP_Connection_t** connection, int socket);
 
 bool FLP_Write(FLP_Connection_t *connection, uint8_t *data, size_t length);
 
