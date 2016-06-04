@@ -13,7 +13,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <string>
-#include "Model/Message.h"
+#include <sstream>
+#include "Message.h"
 
 using namespace std;
 
@@ -27,8 +28,9 @@ public:
 	bool getLastMessageId(uint32_t chatRoomId, uint32_t* messageID);
 	bool getNextMessageId(uint32_t chatRoomId, uint32_t* messageID);
 	bool getNumOfMessages(uint32_t chatRoomId, uint32_t* numOfMessages);
-	bool addMessage(uint32_t chatRoomId, Message message);
-	bool getMessage(uint32_t chatRoomId, Message *message);
+	bool newMessage(uint32_t chatRoomId, Message message);
+	bool getMessage(uint32_t chatRoomId, uint32_t messageId, Message *message);
+	bool newChatRoom(uint32_t chatRoomId);
 };
 
 #endif /* MODEL_H_ */
