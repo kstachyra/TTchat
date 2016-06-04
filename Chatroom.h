@@ -120,13 +120,15 @@ void Chatroom::manageQueueMessages()
     sleep(1);
     //!!!TODO ogarniaj co trzeba zrobic ze wszystkimi wiaodmosciami aż wszystkie obsłużysz
 
-    /*while (!chatroomQueue.empty())
+    Message msg;
+    while (!chatroomQueue.empty())
     {
-        chatroomQueue.front();
-
-
+        msg = chatroomQueue.front();
         chatroomQueue.pop();
-    }*/
+
+        std::cout << "\n" << "wysyłam wiadomość do transmittera pierwszego klienta";
+        clientList.front()->addToTransmitter(msg);
+    }
 }
 
 

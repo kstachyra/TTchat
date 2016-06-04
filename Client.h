@@ -166,7 +166,7 @@ void Client::transmitterThreadFunc()
             //usuń ją
             tempQueue.pop();
 
-            msg.toDataBuffer(data, length);
+            msg.toDataBuffer(data, &length);
 
             isRunning = FLP_Write(id, data, length);
         }
@@ -191,7 +191,11 @@ void Client::receiverThreadFunc()
         isRunning = FLP_Read(id, &data, &length);
         if (isRunning) //jeśli odczytana poprawnie
         {
+            //twórz obiekt wiadomości z bufora danych
             msg = Message(data, length);
+
+            //zwolnij pamieć
+            free (data);
 
             //weź dostęp do kolejki
             receiverMutex.lock();

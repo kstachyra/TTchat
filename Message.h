@@ -1,7 +1,3 @@
-//
-// Created by ks on 18.05.16.
-//
-
 #ifndef TTCHAT_MESSAGE_H
 #define TTCHAT_MESSAGE_H
 
@@ -287,11 +283,16 @@ public:
         else std::cout <<"\n"<< "błędny typ Message dla setMessage";
     }
 
-    void toDataBuffer(uint8_t* data, size_t length)
+    void toDataBuffer(uint8_t* data, size_t* length)
     {
-        //TODO: !!!PZETŁUMACZ NA DATA I LENGTH!!!
-    }
+        data = new uint8_t[*length];
 
+        *length = vec.size();
+        for (int i=0; i<*length; ++i)
+        {
+            data[i] = vec[i];
+        }
+    }
 
 private:
     /*
