@@ -8,9 +8,11 @@
       <sourceFolder url="file://$MODULE_DIR$/Chatroom.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/ClientMonitor.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/MySemaphore.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/flp/flp_crypto.cpp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/flp/flp_crypto.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/flp/flp.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/flp/flp.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/flp/flp_config.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/server.cpp" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/MySemaphore.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/Client.h" isTestSource="false" />

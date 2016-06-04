@@ -32,18 +32,22 @@ int main(int argc,  char* argv[])
  * wątki serwera
  */
 
-void serverListenThread(int port)
+void serverListenThread(unsigned short port)
 {
     std::cout <<"\n"<< "wątek nasłuchujący na połączenia uruchomiony";
+    port = 1234;
 
     bool isRunning = true;
     FLP_Connection_t *newConnection;
+
+    FLP_Listener_t listener;
+    FLP_ListenerInit(&listener, port, "192.168.43.65");
 
     //while(isRunning)
     for (int i=0; i<2; ++i) //na razie tylko i klientów tworzymy, potem to będzie zależeć od FLP_Listen lub czegoś innego
     {
         sleep(2);
-        isRunning = FLP_Listen(&newConnection, port);
+        isRunning = FLP_Listen(&listener, &newConnection, port);
 
         //jeśli podany klucz newConnection nie istnieje w mapie
         if (clientMonitor.clients.find(newConnection) == clientMonitor.clients.end())
@@ -59,13 +63,12 @@ void serverListenThread(int port)
         }
     }
 
-    sleep(4);
+    /*sleep(4);
     auto temp = clientMonitor.clients.begin();
     std::cout << "\n" << "zmieniam CHATROOM ID dla pierwszego klienta " << (*temp).first;
-    clientMonitor.changeChatroomId((*temp).first, 0xFABFABFA);
+    clientMonitor.changeChatroomId((*temp).first, 0xFABFABFA);*/
 
-
-    //tymczasowe usuwanie kientów
+    /*//tymczasowe usuwanie kientów
     for (auto it = clientMonitor.clients.begin(); it != clientMonitor.clients.end();)
     {
         auto temp = it;
@@ -76,7 +79,9 @@ void serverListenThread(int port)
         std::cout <<"\n"<< "usunięto klienta " << (*it).first;
 
         it = temp;
-    }
+    }*/
+
+    FLP_ListenerDeinit(&listener);
 }
 
 void serverServiceThread()
