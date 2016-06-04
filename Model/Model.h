@@ -13,7 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <string>
-#include "Model/Message.h"
+#include "Message.h"
 
 using namespace std;
 

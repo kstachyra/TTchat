@@ -12,10 +12,10 @@
 
 /* Library configuration --------------------------------------------------- */
 /* Enable general log */
-#define FLP_ENABLE_LOG								true
+//#define FLP_ENABLE_LOG								true
 
 /* Enable log in crypto module  */
-#define FLP_CRYPTO_ENABLE_LOG						true
+//#define FLP_CRYPTO_ENABLE_LOG						true
 
 #define FLP_AES_BLOCK_SIZE					((size_t)AES_BLOCK_SIZE)
 

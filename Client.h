@@ -90,7 +90,10 @@ public:
     void addToTransmitter(SLPPacket msg)
     {
         //weź dostęp do kolejki
+    	std::cout<<"przed transmiteter mutex" << "\n";
         transmitterMutex.lock();
+    	std::cout<<"po transmiteter mutex" << "\n";
+
         //wrzuć wiadomość do kolejki
 
         //jeśli była pusta to unlock empty
@@ -99,6 +102,9 @@ public:
         transmitterQueue.push(msg);
         //oddaj dostęp do kolejki
         transmitterMutex.unlock();
+
+    	std::cout<<"koniec addtotransmitter" << "\n";
+
     }
 
     /*przypisuje wszystkie wiadomości z receiverQueue do wskazanej wskaźnikiem tempQueue*/
@@ -110,10 +116,15 @@ public:
         //skopiuj oczekujące wiadomości do tymczasowej kolejki
         while (!receiverQueue.empty())
         {
+        	std::cout<<"RECEIVER QUEUE nie jest empty" << "\n";
             //włóż do tymczasowej pierwzy element oryginalnej
             tempQueue->push(receiverQueue.front());
             //usuń z oryginalnej
+        	std::cout<< "RECEIVER QUEUE PRZED  POPOWANIEM MA: " << receiverQueue.size() <<"\n";
+
             receiverQueue.pop();
+        	std::cout<< "RECEIVER QUEUE PO  POPOWANIEM MA: " << receiverQueue.size() <<"\n";
+
         } //dopóki coś jest w oryginalnej
 
         //zwolnij dostęp do oryginalnej kolejki
@@ -166,9 +177,18 @@ void Client::transmitterThreadFunc()
             //usuń ją
             tempQueue.pop();
 
-            msg.toDataBuffer(data, &length);
+            std::cout<<"AAAAAAAAAAAAAAAAAAAAAAAAAAAA"<<"\n";
+                        std::cout<<"AAAAAAAAAAAAAAAAAAAAAAAAAAAA"<<"\n";
+                        std::cout<<"AAAAAAAAAAAAAAAAAAAAAAAAAAAA"<<"\n";
+
+            msg.toDataBuffer(&data, &length);
+
+            std::cout<<"AAAAAAAAAAAAAAAAAAAAAAAAAAAA"<<"\n";
+            std::cout<<"AAAAAAAAAAAAAAAAAAAAAAAAAAAA"<<"\n";
+            std::cout<<"AAAAAAAAAAAAAAAAAAAAAAAAAAAA"<<"\n";
 
             isRunning = FLP_Write(id, data, length);
+
         }
 
         if (toClose) break;
@@ -189,6 +209,9 @@ void Client::receiverThreadFunc()
     {
         //przeczytaj wiadomość i zapisz ją do msg
         isRunning = FLP_Read(id, &data, &length);
+    	std::cout<< "FLP READ zwraca: " << isRunning <<"\n";
+
+
         if (isRunning) //jeśli odczytana poprawnie
         {
             //twórz obiekt wiadomości z bufora danych
@@ -200,7 +223,9 @@ void Client::receiverThreadFunc()
             //weź dostęp do kolejki
             receiverMutex.lock();
             //wrzuć wiadomość do kolejki
+        	sleep(3);
             receiverQueue.push(msg);
+
             //oddaj dostęp do kolejki
             receiverMutex.unlock();
         }

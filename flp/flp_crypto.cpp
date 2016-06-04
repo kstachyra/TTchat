@@ -27,20 +27,24 @@ bool FLP_Crypto_AESEncrypt(uint8_t *inBuffer, size_t length, uint8_t *sessionKey
 	CTR_State_t CTR_State;
 
 	// Generate initialization vector
+	FLP_CRYPTO_LOG("FLP_Crypto_AESEncrypt: Generating initialization vector...\n");
 	if(!RAND_bytes(initVector, AES_BLOCK_SIZE)) {
 		FLP_CRYPTO_LOG("FLP_Crypto_AESEncrypt: Generating initialization vector failed.\n");
 		return false;
 	}
 
 	// Initialize CTR state
+	FLP_CRYPTO_LOG("FLP_Crypto_AESEncrypt: Initializing CTR state.\n");
 	CTR_Init(&CTR_State, initVector);
 
 	// Set encryption key
+	FLP_CRYPTO_LOG("FLP_Crypto_AESEncrypt: Setting encryption key.\n");
 	if(AES_set_encrypt_key(sessionKey, FLP_SESSION_KEY_LENGTH*8, &key) < 0) {
 		FLP_CRYPTO_LOG("FLP_Crypto_AESEncrypt: Setting AES encryption key failed.\n");
 		return false;
 	}
 
+	FLP_CRYPTO_LOG("FLP_Crypto_AESEncrypt: Encrypting data.\n");
 	AES_ctr128_encrypt(inBuffer, outBuffer, length, &key, CTR_State.initVector, CTR_State.ecount, &CTR_State.num);
 
 	return true;

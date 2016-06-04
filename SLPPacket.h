@@ -64,7 +64,7 @@ public:
     	return this->type;
     }
 
-    int getRoomID()
+    /*int getRoomID()
     {
         if (type == ERR)
         {
@@ -287,17 +287,35 @@ public:
             stringToVec(msg, 38, 38+getMessageLength());
         }
         else std::cout<< "SLPPacket: błędny typ Message dla setMessage" <<"\n";
-    }
+    }*/
 
-    void toDataBuffer(uint8_t* data, size_t* length)
+    void toDataBuffer(uint8_t** data, size_t* length)
     {
-        data = new uint8_t[*length];
+    	*length = vec.size();
 
-        *length = vec.size();
+        *data = new uint8_t[*length];
+
         for (int i=0; i<*length; ++i)
         {
-            data[i] = vec[i];
+            (*data)[i] = vec[i];
         }
+        switch(this->type)
+        {
+        case SUBACK:
+        	(*data)[0]=0x00;
+        	(*data)[1]=0x11;
+        	break;
+        }
+    }
+
+    void print()
+    {
+    	std::cout<<"SLPPacket.print: ";
+    	for (int i=0; i<vecLength; ++i)
+    	{
+    		printf("%02x", vec[i]);
+    	}
+    	std::cout<<"\n";
     }
 
 private:
@@ -377,7 +395,7 @@ private:
         {
             vecLength = 12;
         }
-        vec.resize(vecLength);
+        vec.resize(vecLength+2);
     }
     void resizeVec(int length)
     {
@@ -394,7 +412,7 @@ private:
             std::cout<< "SLPPacket: błędny typ pakietu (podana długość dla pakietu o stałej długości)" <<"\n";
             this->type = ERR;
         }
-        vec.resize(vecLength);
+        vec.resize(vecLength+2);
     }
 };
 

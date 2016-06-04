@@ -167,15 +167,18 @@ bool FLP_Write(FLP_Connection_t *connection, uint8_t *data, size_t length)
 	uint8_t encryptedData[length], initVector[FLP_AES_BLOCK_SIZE];
 
 	// Check connection state
+	FLP_LOG("FLP_Write: Checking connection state.\n");
 	if(connection->state != FLP_CONNECTED) return false;
 
 	// Encrypt data
+	FLP_LOG("FLP_Write: Encrypting data (length=%u).\n", length);
 	if(!FLP_Crypto_AESEncrypt(data, length, connection->sessionKey, initVector, encryptedData)) {
 		FLP_LOG("FLP_Write: Data encryption failed.\n");
 		return false;
 	}
 
 	// Transmit data
+	FLP_LOG("FLP_Write: Transmitting data.\n");
 	if(!FLP_TransmitData(connection, encryptedData, length, initVector)) {
 		FLP_LOG("FLP_Write: Sending data failed.\n");
 		return false;
@@ -694,14 +697,17 @@ static bool FLP_TransmitData(FLP_Connection_t *connection, uint8_t *encryptedDat
 	size_t payloadLength = length + FLP_AES_BLOCK_SIZE;
 	uint8_t payload[payloadLength];
 
+	FLP_LOG("FLP_TransmitData: Transmitting header.\n");
 	if(!FLP_TransmitHeader(connection, FLP_TYPE_DATA, payloadLength)) {
 		FLP_LOG("FLP_TransmitData: Error occured while sending header.\n");
 		return false;
 	}
 
+	FLP_LOG("FLP_TransmitData: Constructing data packet (length=%u).\n", length);
 	memcpy(payload, initVector, FLP_AES_BLOCK_SIZE);
 	memcpy(payload + FLP_AES_BLOCK_SIZE, encryptedData, length);
 
+	FLP_LOG("FLP_TransmitData: Transmitting payload.\n");
 	if(!FLP_Transmit(connection, payload, payloadLength)) {
 		FLP_LOG("FLP_TransmitData: Error occured while sending payload.\n");
 		return false;

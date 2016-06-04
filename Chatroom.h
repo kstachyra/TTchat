@@ -82,11 +82,15 @@ void Chatroom::chatroomThreadFunc()
     {
         listMutex.lock();
         //dla każdego klienta w rozmowie
+        std::cout<< "chatroomThreadFunc: chatroom " << id << " ma w swojej kolejce wiadomosci " << chatroomQueue.size() <<"\n";
         for (auto it = clientList.begin(); it != clientList.end(); ++it)
         {
             std::queue < SLPPacket > tempQueue;
             std::cout << "chatroomThreadFunc: ja chatroom " << id << " pobieram wiadomości z receiverQueue dla klienta " << (*it)->id <<"\n";
             (*it)->getFromReceiver(&tempQueue);
+            //TODO dać empty na receiver queue
+            sleep(3);
+            std::cout << "chatroomThreadFunc: wywołano get Receiver po sleep(3)" << "\n";
 
             //dla wszystkich nowopobranych wiadomości
             while (!tempQueue.empty())
@@ -103,8 +107,6 @@ void Chatroom::chatroomThreadFunc()
 
         manageQueueMessages();
 
-        std::cout<< "chatroomThreadFunc: chatroom " << id << " ma w swojej kolejce wiadomosci " << chatroomQueue.size() <<"\n";
-
         //zapisujemy tu informacje o ostatnim stanie pustosci listy
         listMutex.lock();
         if (clientList.empty()) toStop = 1;
@@ -117,17 +119,16 @@ void Chatroom::chatroomThreadFunc()
 
 void Chatroom::manageQueueMessages()
 {
-    sleep(1);
     //!!!TODO ogarniaj co trzeba zrobic ze wszystkimi wiaodmosciami aż wszystkie obsłużysz
-
     SLPPacket msg;
     while (!chatroomQueue.empty())
     {
+    	std::cout<< "manageQueueMessages: kolejka ma " << chatroomQueue.size() << "\n";
         msg = chatroomQueue.front();
         chatroomQueue.pop();
 
         std::cout<< "manageQueueMessages: w kolejce chatroomu mam wiadomość typu " << msg.getType() <<"\n";
-
+        msg.print();
         std::cout<< "manageQueueMessages: wysyłam wiadomość do transmittera klienta SubAck" <<"\n";
 
         msg = SLPPacket(SLPPacket::SUBACK);
