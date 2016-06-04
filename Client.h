@@ -28,6 +28,8 @@ private:
     std::thread transmitterThread;
     std::thread receiverThread;
 
+    //czy wątki klienta do zamknięcia
+    bool toClose = 0;
 public:
     /*Client()
     {
@@ -37,9 +39,9 @@ public:
         //początkowe wartości mutexów empty na zablokowane
         transmitterEmpty.lock();
         //receiverEmpty.lock();
-    }*/
+    }
 
-    /*Client(FLP_Connection_t * con)
+    Client(FLP_Connection_t * con)
     {
         this->id = con;
         chatroomId = 0xFFFFFFFF;
@@ -83,9 +85,18 @@ public:
         receiverThread.detach();
     }
 
+    /*wpisuje do kolejki transmittera daną (jedną) wiadomość*/
     void addToTransmitter(Message msg)
     {
-        //TODO: !!!napisać metody dla wątku rozmowy
+        //weź dostęp do kolejki
+        transmitterMutex.lock();
+        //wrzuć wiadomość do kolejki
+
+        //TODO jeśli była pusta to empty.unlock()
+
+        transmitterQueue.push(msg);
+        //oddaj dostęp do kolejki
+        transmitterMutex.unlock();
     }
 
     /*przypisuje wszystkie wiadomości z receiverQueue do wskazanej wskaźnikiem tempQueue*/
@@ -107,6 +118,13 @@ public:
         receiverMutex.unlock();
     }
 
+    void close()
+    {
+        FLP_Close(id);
+        toClose = 1;
+        //if (!transmitterEmpty.try_lock());
+    }
+
 private:
     void receiverThreadFunc();
     void transmitterThreadFunc();
@@ -118,10 +136,12 @@ void Client::transmitterThreadFunc()
     uint8_t * data;
     bool isRunning = 1;
 
-    /*while(isRunning)
+    while(isRunning)
     {
+        //std::cout<<"DSADSADASDASDASDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAaSDAS";
+        //TODO ZAWIESZA SIE NA EMPTY! jak odiwiesić gdy chcemy skończyć? :S unlock unlocked?
         //jeśli kolejka pusta, to zawieś się na mutexie empty
-        transmitterEmpty.lock();
+        //transmitterEmpty.lock();
         //weź dostęp do kolejki
         transmitterMutex.lock();
 
@@ -144,16 +164,18 @@ void Client::transmitterThreadFunc()
         //wyślij wszystkie wiadomości z tymczasowej kolejki
         while (!tempQueue.empty())
         {
-            //weź pierwszą z kolejki
+            //przypisz pierwszą z kolejki
             Message msg = tempQueue.front();
             //usuń ją
             tempQueue.pop();
 
-            //TODO: !!!PZETŁUMACZ NA DATA I LENGTH!!!
+            msg.toDataBuffer(data, length);
 
-            ////TODO isRunning = FLP_Write(id, data, length);
+            isRunning = FLP_Write(id, data, length);
         }
-    }*/
+
+        if (toClose) break;
+    }
 
     sleep(5);
     std::cout <<"\n"<< "wątek transmitter KOŃCZY PRACĘ dla klienta " << id;
@@ -165,6 +187,8 @@ void Client::receiverThreadFunc()
     uint8_t * data;
     bool isRunning = 1;
     Message msg;
+
+    //TODO isRunning FLP zwraca 0 i 1 kiedy finalnie oryginalnie jak ma byc? Isrunning czy isStoped?
 
     while (1)
     {

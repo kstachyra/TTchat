@@ -40,14 +40,14 @@ public:
             //to stwórz
             addChatroom(chatroomId);
             //dodajdo klienta do chatroomu
-            chatrooms[chatroomId]->addClient(clientId);
+            chatrooms[chatroomId]->addClient(newClient);
             //i uruchom wątek chatroomu
             chatrooms[chatroomId]->runThread();
         }
         else //a jak jest
         {
             //to tylko dodaj klienta doń
-            chatrooms[chatroomId]->addClient(clientId);
+            chatrooms[chatroomId]->addClient(newClient);
         }
 
         //uuchom wątki klienta
@@ -59,7 +59,8 @@ public:
     void removeClient(FLP_Connection_t * clientId)
     {
         enter();
-
+        //poinformuj klienta, że go zamykamy
+        clients[clientId]->close();
         //jeśli klient nie istnieje w mapie
         if (clients.find(clientId) == clients.end())
         {
@@ -68,19 +69,20 @@ public:
         else
         {
             //zamknij połączenie (FLP_Read i FLP_Write zwrócą błąd, wątki klienta skończą pracę niebawem)
-            ////TODO FLP_Close(clientId);
 
             //TODO joinować czy detachować?
             //clients[clientId]->detachThreads();
             clients[clientId]->joinThreads();
 
             //usuń klienta z chatroomu
-            chatrooms[clients[clientId]->chatroomId]->removeClient(clientId);
+            chatrooms[clients[clientId]->chatroomId]->removeClient(clients[clientId]);
 
             //sprawdzamy, czy nie usunąć chatroomu (czy nie był to ostatni klient tego chatroomu)
             if (chatrooms[clients[clientId]->chatroomId]->isEmpty())
             {
+
                 std::cout << "\n" << "BYŁ TO OSTATNI KLIENT, USUWAM CHATROOM " << clients[clientId]->chatroomId;
+
                 chatrooms[clients[clientId]->chatroomId]->joinThread();
                 removeChatroom(clients[clientId]->chatroomId);
             }

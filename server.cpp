@@ -25,12 +25,6 @@ int main(int argc,  char* argv[])
     if (listenThread.joinable()) listenThread.join();
     if (serviceThread.joinable()) serviceThread.join();
 
-    for (auto it = clientMonitor.chatrooms.begin(); it != clientMonitor.chatrooms.end(); it++)
-    {
-        std::cout <<"\n"<< "czekam na watek czatroomu";
-        it->second->joinThread();
-    }
-
 	return 0;
 }
 
@@ -46,7 +40,7 @@ void serverListenThread(int port)
     FLP_Connection_t *newConnection;
 
     //while(isRunning)
-    for (int i=0; i<5; ++i) //na razie tylko i klientów tworzymy, potem to będzie zależeć od FLP_Listen
+    for (int i=0; i<2; ++i) //na razie tylko i klientów tworzymy, potem to będzie zależeć od FLP_Listen lub czegoś innego
     {
         sleep(2);
         isRunning = FLP_Listen(&newConnection, port);
@@ -73,6 +67,7 @@ void serverListenThread(int port)
         sleep(5);
         std::cout <<"\n"<< "Usuwam klienta " << (*it).first;
         clientMonitor.removeClient(it->first);
+        std::cout <<"\n"<< "usunięto klienta " << (*it).first;
 
         it = temp;
     }

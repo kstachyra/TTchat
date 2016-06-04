@@ -287,6 +287,11 @@ public:
         else std::cout <<"\n"<< "błędny typ Message dla setMessage";
     }
 
+    void toDataBuffer(uint8_t* data, size_t length)
+    {
+        //TODO: !!!PZETŁUMACZ NA DATA I LENGTH!!!
+    }
+
 
 private:
     /*

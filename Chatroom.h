@@ -14,7 +14,7 @@ public:
 
 private:
     //lista identyfikatorów klientów należących do rozmowy
-    list < FLP_Connection_t* > clientList;
+    list < Client* > clientList;
     std::mutex listMutex;
 
     //kolejka wiadomości do obsłużenia przez wątek chatroomu
@@ -34,7 +34,6 @@ public:
     void runThread()
     {
         chatroomThread = std::thread(&Chatroom::chatroomThreadFunc, this);
-        std::cout <<"\n"<< "uruchomiono wątek chatroomu wątek chatroomu " << id;
     }
 
     void joinThread()
@@ -43,17 +42,17 @@ public:
         std::cout <<"\n"<< "zjoinowano wątek chatroomu " << id;
     }
 
-    void addClient(FLP_Connection_t* con)
+    void addClient(Client* c)
     {
         listMutex.lock();
-        clientList.push_back(con);
+        clientList.push_back(c);
         listMutex.unlock();
     }
 
-    void removeClient(FLP_Connection_t* con)
+    void removeClient(Client* c)
     {
         listMutex.lock();
-        clientList.remove(con);
+        clientList.remove(c);
         listMutex.unlock();
     }
 
@@ -86,9 +85,8 @@ void Chatroom::chatroomThreadFunc()
         for (auto it = clientList.begin(); it != clientList.end(); ++it)
         {
             std::queue < Message > tempQueue;
-            //!!!TODO AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA clieMonitor zrobić dostęp :S
-            std::cout << "\n" << "ja chatroom " << id << " pobieram wiadomości z receiverQueue dla klienta " << *it;
-            /*clientMonitor.clients[(*it)]->getFromReceiver(&tempQueue);*/
+            std::cout << "\n" << "ja chatroom " << id << " pobieram wiadomości z receiverQueue dla klienta " << (*it)->id;
+            (*it)->getFromReceiver(&tempQueue);
 
             //dla wszystkich nowopobranych wiadomości
             while (!tempQueue.empty())
@@ -104,6 +102,8 @@ void Chatroom::chatroomThreadFunc()
         listMutex.unlock();
 
         manageQueueMessages();
+
+        std::cout<< "\n" << "chatroom ma w swojej kolejce wiadomosci " << chatroomQueue.size();
 
         //zapisujemy tu informacje o ostatnim stanie pustosci listy
         listMutex.lock();
@@ -123,6 +123,8 @@ void Chatroom::manageQueueMessages()
     /*while (!chatroomQueue.empty())
     {
         chatroomQueue.front();
+
+
         chatroomQueue.pop();
     }*/
 }

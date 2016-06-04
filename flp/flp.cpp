@@ -13,33 +13,34 @@ bool FLP_Write(FLP_Connection_t *connection, uint8_t *data, size_t length)
         std::cout << "\n" << "FAKE_FLP: WRITE zwraca 1 -- connection " << connection;
         return 1;
     }
-    std::cout << "\n" << "FAKE_FLP: WRITE dostał data -- ";
+
+    //std::cout << "\n" << "FAKE_FLP: WRITE dostał data -- ";
     for (uint8_t i=0 ; i<length; ++i)
     {
-        std::cout << data+i;
+        //std::cout << *(data+i);
     }
 }
 
 bool FLP_Read(FLP_Connection_t *connection, uint8_t **data, size_t *length)
 {
-    std::cout << "\n" << "FAKE_FLP: READ zapisuje data -- ";
     if (connection->stop==1)
     {
         std::cout << "\n" << "FAKE_FLP: READ zwraca 1 -- connection " << connection;
         return 1;
     }
-    *length = 10;
 
+    *length = 10;
 
     //tworzę bufor zadanej długości
     *data = new uint8_t[*length];
 
+    //std::cout << "\n" << "FAKE_FLP: READ zapisuje data -- ";
     //uzupełniam go po kolei czymś
     for (uint8_t i=0 ; i<*length; ++i)
     {
-        *data[i] = i;
+        (*data)[i] = i;
+        //std::cout << (int)i;
     }
-    std::cout << "\n" << "FAKE_FLP: READ zapisuje data -- ";
     return 0;
 }
 
