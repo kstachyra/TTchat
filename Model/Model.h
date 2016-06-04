@@ -24,10 +24,11 @@ private:
 public:
 	Model(void);
 	bool connect(string host, string user, string password, string db);
-	bool getLastMessageId(uint32_t* messageID);
-	bool getNumOfMessages(uint32_t* numOfMessages);
-	bool addMessage(Message message);
-	bool getMessage(Message *message);
+	bool getLastMessageId(uint32_t chatRoomId, uint32_t* messageID);
+	bool getNextMessageId(uint32_t chatRoomId, uint32_t* messageID);
+	bool getNumOfMessages(uint32_t chatRoomId, uint32_t* numOfMessages);
+	bool addMessage(uint32_t chatRoomId, Message message);
+	bool getMessage(uint32_t chatRoomId, Message *message);
 };
 
 #endif /* MODEL_H_ */
