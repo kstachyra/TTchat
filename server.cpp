@@ -6,7 +6,7 @@
 
 using namespace std;
 
-void serverListenThread(int port);
+void serverListenThread(unsigned short port);
 void serverServiceThread();
 
 int main(int argc,  char* argv[])
@@ -43,10 +43,8 @@ void serverListenThread(unsigned short port)
     FLP_Listener_t listener;
     FLP_ListenerInit(&listener, port, "192.168.43.65");
 
-    //while(isRunning)
-    for (int i=0; i<2; ++i) //na razie tylko i klientów tworzymy, potem to będzie zależeć od FLP_Listen lub czegoś innego
+    while(isRunning)
     {
-        sleep(2);
         isRunning = FLP_Listen(&listener, &newConnection, port);
 
         //jeśli podany klucz newConnection nie istnieje w mapie
