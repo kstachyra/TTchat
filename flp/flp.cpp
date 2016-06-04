@@ -102,6 +102,8 @@ bool FLP_ListenerInit(FLP_Listener_t *listener, unsigned short port, char *host)
 		return false;
 	}
 
+	FLP_LOG("FLP_ListenerInit: Listener initialized successfully.\n");
+
 	return true;
 }
 
@@ -117,6 +119,7 @@ bool FLP_Listen(FLP_Listener_t *listener, FLP_Connection_t **connection, unsigne
 	struct timeval timeout;
 
 	// Enable listening for new TCP connections
+	FLP_LOG("FLP_Listen: Listening for TCP connection.\n");
 	if (listen(listener->listeningSocket, SOMAXCONN) != 0) {
 		FLP_LOG("FLP_Listen: listen failed.\n");
 		return false;
@@ -132,7 +135,7 @@ bool FLP_Listen(FLP_Listener_t *listener, FLP_Connection_t **connection, unsigne
 		FLP_LOG("FLP_Listen: select failed.\n");
 		return false;
 	} else if(result == 0) {
-//		FLP_LOG("FLP_Listen: select timed out.\n");
+		FLP_LOG("FLP_Listen: select timed out.\n");
 		*connection = NULL;
 		return true;
 	}

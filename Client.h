@@ -175,7 +175,7 @@ void Client::transmitterThreadFunc()
     }
 
     sleep(5);
-    std::cout <<"\n"<< "wątek transmitter KOŃCZY PRACĘ dla klienta " << id;
+    std::cout<< "transmitterThreadFunc: wątek transmitter KOŃCZY PRACĘ dla klienta " << id <<"\n";
 }
 
 void Client::receiverThreadFunc()
@@ -209,7 +209,7 @@ void Client::receiverThreadFunc()
 
 
     sleep(5);
-    std::cout <<"\n"<< "wątek receiver KOŃCZY PRACĘ dla klienta " << id;
+    std::cout<< "receiverThreadFunc: wątek receiver KOŃCZY PRACĘ dla klienta " << id <<"\n";
 }
 
 #endif //TTCHAT_CLIENT_H

@@ -39,7 +39,7 @@ public:
     void joinThread()
     {
         if (chatroomThread.joinable()) chatroomThread.join();
-        std::cout <<"\n"<< "zjoinowano wątek chatroomu " << id;
+        std::cout << "Chatroom.joinThread: zjoinowano wątek chatroomu " << id <<"\n";
     }
 
     void addClient(Client* c)
@@ -73,7 +73,7 @@ private:
 
 void Chatroom::chatroomThreadFunc()
 {
-    std::cout << "\n" << "uruchomiono wątek chatroomu " << id;
+    std::cout << "chatroomThreadFunc: uruchomiono wątek chatroomu " << id <<"\n";
 
     //tu przechowujemy informacje o tym, czy ostatnio lista byla pusta
     bool toStop=0;
@@ -85,7 +85,7 @@ void Chatroom::chatroomThreadFunc()
         for (auto it = clientList.begin(); it != clientList.end(); ++it)
         {
             std::queue < SLPPacket > tempQueue;
-            std::cout << "\n" << "ja chatroom " << id << " pobieram wiadomości z receiverQueue dla klienta " << (*it)->id;
+            std::cout << "chatroomThreadFunc: ja chatroom " << id << " pobieram wiadomości z receiverQueue dla klienta " << (*it)->id <<"\n";
             (*it)->getFromReceiver(&tempQueue);
 
             //dla wszystkich nowopobranych wiadomości
@@ -97,13 +97,13 @@ void Chatroom::chatroomThreadFunc()
                 tempQueue.pop();
             }
         }
-        std::cout << "\n" << "watek czatroomu " << id << " pracuje sobie i ma klientow: " << clientList.size();
+        std::cout<< "chatroomThreadFunc: watek czatroomu " << id << " pracuje sobie i ma klientow: " << clientList.size() <<"\n";
         //odblokuj listę, żeby w trakcie manageQueueMassages był do niej dostęp na dodawanie i odejmowanie klientów
         listMutex.unlock();
 
         manageQueueMessages();
 
-        std::cout<< "\n" << "chatroom " << id << " ma w swojej kolejce wiadomosci " << chatroomQueue.size();
+        std::cout<< "chatroomThreadFunc: chatroom " << id << " ma w swojej kolejce wiadomosci " << chatroomQueue.size() <<"\n";
 
         //zapisujemy tu informacje o ostatnim stanie pustosci listy
         listMutex.lock();
@@ -112,7 +112,7 @@ void Chatroom::chatroomThreadFunc()
         //żeby uniknąć nie odblokowania mutexa
         if (toStop) break;
     }
-    std::cout << "\n" << "wątek chatroomu kończy pracę " << id;
+    std::cout<< "chatroomThreadFunc: wątek chatroomu kończy pracę " << id <<"\n";
 }
 
 void Chatroom::manageQueueMessages()
@@ -126,9 +126,9 @@ void Chatroom::manageQueueMessages()
         msg = chatroomQueue.front();
         chatroomQueue.pop();
 
-        std::cout << "\n" << "w kolejce chatroomu mam wiadomość typu " << msg.getType();
+        std::cout<< "manageQueueMessages: w kolejce chatroomu mam wiadomość typu " << msg.getType() <<"\n";
 
-        std::cout << "\n" << "wysyłam wiadomość do transmittera klienta SubAck";
+        std::cout<< "manageQueueMessages: wysyłam wiadomość do transmittera klienta SubAck" <<"\n";
 
         msg = SLPPacket(SLPPacket::SUBACK);
         clientList.front()->addToTransmitter(msg);

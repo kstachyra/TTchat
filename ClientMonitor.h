@@ -64,7 +64,7 @@ public:
         //jeśli klient nie istnieje w mapie
         if (clients.find(clientId) == clients.end())
         {
-            std::cout <<"\n"<< "klient, którego chcemy usunąć nie istnieje w mapie";
+            std::cout << "removeClient: klient, którego chcemy usunąć nie istnieje w mapie" <<"\n";
         }
         else
         {
@@ -81,7 +81,7 @@ public:
             if (chatrooms[clients[clientId]->chatroomId]->isEmpty())
             {
 
-                std::cout << "\n" << "BYŁ TO OSTATNI KLIENT, USUWAM CHATROOM " << clients[clientId]->chatroomId;
+                std::cout << "removeClient: BYŁ TO OSTATNI KLIENT, USUWAM CHATROOM " << clients[clientId]->chatroomId <<"\n";
 
                 chatrooms[clients[clientId]->chatroomId]->joinThread();
                 removeChatroom(clients[clientId]->chatroomId);
@@ -144,7 +144,7 @@ private:
 
     void removeChatroom(uint64_t chatroomId)
     {
-        std::cout << "\n" << "usuwam chatroom " << chatrooms[chatroomId]->id;
+        std::cout << "removeChatroom: usuwam chatroom " << chatrooms[chatroomId]->id <<"\n";
         //zwalniamy pamięć tego chatroomu
         delete chatrooms[chatroomId];
 

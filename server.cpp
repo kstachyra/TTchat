@@ -34,7 +34,7 @@ int main(int argc,  char* argv[])
 
 void serverListenThread(unsigned short port)
 {
-    std::cout <<"\n"<< "wątek nasłuchujący na połączenia uruchomiony";
+    std::cout<< "serverListenThread: wątek nasłuchujący na połączenia uruchomiony" <<"\n";
     port = 1234;
 
     bool isRunning = true;
@@ -45,25 +45,26 @@ void serverListenThread(unsigned short port)
 
     while(isRunning)
     {
-        isRunning = FLP_Listen(&listener, &newConnection, port);
+        isRunning = FLP_Listen(&listener, &newConnection, 60000);
+        std::cout<< "serverListenThread: FLP_Listen zwróciło: " << isRunning <<"\n";
 
         //jeśli podany klucz newConnection nie istnieje w mapie
         if (clientMonitor.clients.find(newConnection) == clientMonitor.clients.end())
         {
             //dodaj go do chatroomu dla nowych klientow
             clientMonitor.addClient(newConnection, 0xFFFFFFFF);
-            std::cout <<"\n"<< "dodano klienta " << newConnection << " do monitora klientów";
+            std::cout<< "serverListenThread: dodano klienta " << newConnection << " do monitora klientów" <<"\n";
         }
         //jeśli istnieje już
         else
         {
-            std::cout <<"\n"<< "klient próbujący nawiązać połączenie na port nasłuchujący już istnieje w mapie";
+            std::cout<< "serverListenThread: klient próbujący nawiązać połączenie na port nasłuchujący już istnieje w mapie" <<"\n";
         }
     }
 
     /*sleep(4);
     auto temp = clientMonitor.clients.begin();
-    std::cout << "\n" << "zmieniam CHATROOM ID dla pierwszego klienta " << (*temp).first;
+    std::cout <<"zmieniam CHATROOM ID dla pierwszego klienta " << (*temp).first <<"\n";
     clientMonitor.changeChatroomId((*temp).first, 0xFABFABFA);*/
 
     /*//tymczasowe usuwanie kientów
@@ -72,9 +73,9 @@ void serverListenThread(unsigned short port)
         auto temp = it;
         temp++;
         sleep(5);
-        std::cout <<"\n"<< "Usuwam klienta " << (*it).first;
+        std::cout<< "serverListenThread: Usuwam klienta " << (*it).first <<"\n";
         clientMonitor.removeClient(it->first);
-        std::cout <<"\n"<< "usunięto klienta " << (*it).first;
+        std::cout<< "serverListenThread: usunięto klienta " << (*it).first <<"\n";
 
         it = temp;
     }*/
@@ -84,5 +85,5 @@ void serverListenThread(unsigned short port)
 
 void serverServiceThread()
 {
-    std::cout <<"\n"<< "uruchomiono wątek serwisowy";
+    std::cout<< "serverServiceThread: uruchomiono wątek serwisowy" <<"\n";
 }
