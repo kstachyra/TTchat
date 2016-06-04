@@ -18,7 +18,7 @@ private:
     std::mutex listMutex;
 
     //kolejka wiadomości do obsłużenia przez wątek chatroomu
-    std::queue < Message > chatroomQueue;
+    std::queue < SLPPacket > chatroomQueue;
 
     std::thread chatroomThread;
 
@@ -84,7 +84,7 @@ void Chatroom::chatroomThreadFunc()
         //dla każdego klienta w rozmowie
         for (auto it = clientList.begin(); it != clientList.end(); ++it)
         {
-            std::queue < Message > tempQueue;
+            std::queue < SLPPacket > tempQueue;
             std::cout << "\n" << "ja chatroom " << id << " pobieram wiadomości z receiverQueue dla klienta " << (*it)->id;
             (*it)->getFromReceiver(&tempQueue);
 
@@ -120,13 +120,17 @@ void Chatroom::manageQueueMessages()
     sleep(1);
     //!!!TODO ogarniaj co trzeba zrobic ze wszystkimi wiaodmosciami aż wszystkie obsłużysz
 
-    Message msg;
+    SLPPacket msg;
     while (!chatroomQueue.empty())
     {
         msg = chatroomQueue.front();
         chatroomQueue.pop();
 
-        std::cout << "\n" << "wysyłam wiadomość do transmittera pierwszego klienta";
+        std::cout << "\n" << "w kolejce chatroomu mam wiadomość typu " << msg.getType();
+
+        std::cout << "\n" << "wysyłam wiadomość do transmittera klienta SubAck";
+
+        msg = SLPPacket(SLPPacket::SUBACK);
         clientList.front()->addToTransmitter(msg);
     }
 }

@@ -6,7 +6,7 @@
 
 using namespace std;
 
-class Message
+class SLPPacket
 {
 public:
     //typ ERR oznacza stworzony obiekt Message bez innego określonego typu
@@ -23,7 +23,7 @@ public:
     /*
      * konstruktor nieznanej wiadomości
      */
-    Message()
+    SLPPacket()
     {
         this->type = ERR;
     }
@@ -31,7 +31,7 @@ public:
     /*
      * konstruktor dla typów o stałej długości
      */
-    Message(messageType type)
+    SLPPacket(messageType type)
     {
         this->type = type;
         resizeVec();
@@ -40,7 +40,7 @@ public:
     /*
      * konstruktor dla typów o zmiennej długości treści wiadomości (podawana długość bajtowa treści wiadomości)
      */
-    Message(messageType type, int length)
+    SLPPacket(messageType type, int length)
     {
         this->type = type;
         resizeVec(length);
@@ -49,7 +49,7 @@ public:
     /*
      * konstruktor dla FLP_Read
      */
-    Message(uint8_t *data, size_t length)
+    SLPPacket(uint8_t *data, size_t length)
     {
         vec.assign (data,data+length);
     }
@@ -58,6 +58,11 @@ public:
     /*
      * settery i gettery
      */
+    int getType()
+    {
+    	return this->type;
+    }
+
     int getRoomID()
     {
         if (type == ERR)

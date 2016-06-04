@@ -2,12 +2,12 @@
 #define TTCHAT_CLIENT_H
 #include <sys/types.h>
 #include "flp/flp.h"
-#include "Message.h"
 #include <thread>
 #include <queue>
 #include <mutex>
 #include <iostream>
 #include "MySemaphore.h"
+#include "SLPPacket.h"
 
 
 class Client
@@ -17,8 +17,8 @@ public:
     uint64_t chatroomId;
 
 private:
-    std::queue < Message > transmitterQueue;
-    std::queue < Message > receiverQueue;
+    std::queue < SLPPacket > transmitterQueue;
+    std::queue < SLPPacket > receiverQueue;
 
     std::mutex transmitterMutex;
     std::mutex receiverMutex;
@@ -87,7 +87,7 @@ public:
     }
 
     /*wpisuje do kolejki transmittera daną (jedną) wiadomość*/
-    void addToTransmitter(Message msg)
+    void addToTransmitter(SLPPacket msg)
     {
         //weź dostęp do kolejki
         transmitterMutex.lock();
@@ -102,7 +102,7 @@ public:
     }
 
     /*przypisuje wszystkie wiadomości z receiverQueue do wskazanej wskaźnikiem tempQueue*/
-    void getFromReceiver(std::queue < Message >* tempQueue)
+    void getFromReceiver(std::queue < SLPPacket >* tempQueue)
     {
         //weź dostęp do kolejki
         receiverMutex.lock();
@@ -146,7 +146,7 @@ void Client::transmitterThreadFunc()
         transmitterMutex.lock();
 
         //skopiuj oczekujące wiadomości do tymczasowej kolejki
-        std::queue < Message > tempQueue;
+        std::queue < SLPPacket > tempQueue;
         while (!transmitterQueue.empty())
         {
             //włóż do tymczasowej pierwzy element oryginalnej
@@ -162,7 +162,7 @@ void Client::transmitterThreadFunc()
         while (!tempQueue.empty())
         {
             //przypisz pierwszą z kolejki
-            Message msg = tempQueue.front();
+            SLPPacket msg = tempQueue.front();
             //usuń ją
             tempQueue.pop();
 
@@ -183,7 +183,7 @@ void Client::receiverThreadFunc()
     size_t  length;
     uint8_t * data;
     bool isRunning;
-    Message msg;
+    SLPPacket msg;
 
     while (1)
     {
@@ -192,7 +192,7 @@ void Client::receiverThreadFunc()
         if (isRunning) //jeśli odczytana poprawnie
         {
             //twórz obiekt wiadomości z bufora danych
-            msg = Message(data, length);
+            msg = SLPPacket(data, length);
 
             //zwolnij pamieć
             free (data);
