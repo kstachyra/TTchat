@@ -103,7 +103,7 @@ void Chatroom::chatroomThreadFunc()
 
         manageQueueMessages();
 
-        std::cout<< "\n" << "chatroom ma w swojej kolejce wiadomosci " << chatroomQueue.size();
+        std::cout<< "\n" << "chatroom " << id << " ma w swojej kolejce wiadomosci " << chatroomQueue.size();
 
         //zapisujemy tu informacje o ostatnim stanie pustosci listy
         listMutex.lock();

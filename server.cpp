@@ -59,6 +59,11 @@ void serverListenThread(int port)
         }
     }
 
+    sleep(4);
+    auto temp = clientMonitor.clients.begin();
+    std::cout << "\n" << "zmieniam CHATROOM ID dla pierwszego klienta " << (*temp).first;
+    clientMonitor.changeChatroomId((*temp).first, 0xFABFABFA);
+
 
     //tymczasowe usuwanie kientów
     for (auto it = clientMonitor.clients.begin(); it != clientMonitor.clients.end();)

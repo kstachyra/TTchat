@@ -107,7 +107,7 @@ public:
         return toReturn;
     }
 
-    uint64_t changeChatroomId(FLP_Connection_t *clientId, uint8_t newId)
+    uint64_t changeChatroomId(FLP_Connection_t *clientId, uint64_t newId)
     {
         enter();
         //usuń ze starego chatroomu

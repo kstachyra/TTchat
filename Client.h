@@ -124,7 +124,7 @@ public:
     {
         FLP_Close(id);
         toClose = 1;
-        //if (!transmitterEmpty.try_lock());
+        transmitterEmpty.notify();
     }
 
 private:
@@ -140,8 +140,6 @@ void Client::transmitterThreadFunc()
 
     while(isRunning)
     {
-        //std::cout<<"DSADSADASDASDASDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAaSDAS";
-        //TODO ZAWIESZA SIE NA EMPTY! jak odiwiesić gdy chcemy skończyć? :S unlock unlocked?
         //jeśli kolejka pusta, to zawieś się na mutexie empty
         transmitterEmpty.wait();
         //weź dostęp do kolejki
@@ -184,7 +182,7 @@ void Client::receiverThreadFunc()
 {
     size_t  length;
     uint8_t * data;
-    bool isRunning = true;
+    bool isRunning;
     Message msg;
 
     while (1)
