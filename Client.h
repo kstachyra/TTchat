@@ -2,11 +2,12 @@
 #define TTCHAT_CLIENT_H
 #include <sys/types.h>
 #include "flp/flp.h"
-#include "Message.h"
 #include <thread>
 #include <queue>
 #include <mutex>
 #include <iostream>
+#include "MySemaphore.h"
+#include "SLPPacket.h"
 
 
 class Client
@@ -16,13 +17,13 @@ public:
     uint64_t chatroomId;
 
 private:
-    std::queue < Message > transmitterQueue;
-    std::queue < Message > receiverQueue;
+    std::queue < SLPPacket > transmitterQueue;
+    std::queue < SLPPacket > receiverQueue;
 
     std::mutex transmitterMutex;
     std::mutex receiverMutex;
 
-    std::mutex transmitterEmpty;
+    MySemaphore transmitterEmpty;
     //std::mutex receiverEmpty; -> odkomentować w konstruktorach w razie potrzeby
 
     std::thread transmitterThread;
@@ -51,13 +52,13 @@ public:
         //receiverEmpty.lock();
     }*/
 
-    Client(FLP_Connection_t * con, uint64_t chatId)
+    Client(FLP_Connection_t * con, uint64_t chatId) : transmitterEmpty(0)
     {
         this->id = con;
         chatroomId = chatId;
 
         //początkowe wartości mutexów empty na zablokowane
-        transmitterEmpty.lock();
+
         //receiverEmpty.lock();
     }
 
@@ -86,13 +87,14 @@ public:
     }
 
     /*wpisuje do kolejki transmittera daną (jedną) wiadomość*/
-    void addToTransmitter(Message msg)
+    void addToTransmitter(SLPPacket msg)
     {
         //weź dostęp do kolejki
         transmitterMutex.lock();
         //wrzuć wiadomość do kolejki
 
-        //TODO jeśli była pusta to empty.unlock()
+        //jeśli była pusta to unlock empty
+        if (transmitterQueue.empty()) transmitterEmpty.notify();
 
         transmitterQueue.push(msg);
         //oddaj dostęp do kolejki
@@ -100,7 +102,7 @@ public:
     }
 
     /*przypisuje wszystkie wiadomości z receiverQueue do wskazanej wskaźnikiem tempQueue*/
-    void getFromReceiver(std::queue < Message >* tempQueue)
+    void getFromReceiver(std::queue < SLPPacket >* tempQueue)
     {
         //weź dostęp do kolejki
         receiverMutex.lock();
@@ -122,7 +124,7 @@ public:
     {
         FLP_Close(id);
         toClose = 1;
-        //if (!transmitterEmpty.try_lock());
+        transmitterEmpty.notify();
     }
 
 private:
@@ -138,15 +140,13 @@ void Client::transmitterThreadFunc()
 
     while(isRunning)
     {
-        //std::cout<<"DSADSADASDASDASDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAaSDAS";
-        //TODO ZAWIESZA SIE NA EMPTY! jak odiwiesić gdy chcemy skończyć? :S unlock unlocked?
         //jeśli kolejka pusta, to zawieś się na mutexie empty
-        //transmitterEmpty.lock();
+        transmitterEmpty.wait();
         //weź dostęp do kolejki
         transmitterMutex.lock();
 
         //skopiuj oczekujące wiadomości do tymczasowej kolejki
-        std::queue < Message > tempQueue;
+        std::queue < SLPPacket > tempQueue;
         while (!transmitterQueue.empty())
         {
             //włóż do tymczasowej pierwzy element oryginalnej
@@ -155,9 +155,6 @@ void Client::transmitterThreadFunc()
             transmitterQueue.pop();
         } //dopóki coś jest w oryginalnej
 
-        //powiedz, że na pewno nic nie będzie w kolejce, jeśli ktoś zdążył coś dodać (trylock) - może zwrócić false i nie zablokować, więc po wejściu do sekcji krytycznej i tak sprawdzamy czy pusta
-        transmitterEmpty.try_lock();
-
         //zwolnij dostęp do oryginalnej kolejki
         transmitterMutex.unlock();
 
@@ -165,11 +162,11 @@ void Client::transmitterThreadFunc()
         while (!tempQueue.empty())
         {
             //przypisz pierwszą z kolejki
-            Message msg = tempQueue.front();
+            SLPPacket msg = tempQueue.front();
             //usuń ją
             tempQueue.pop();
 
-            msg.toDataBuffer(data, length);
+            msg.toDataBuffer(data, &length);
 
             isRunning = FLP_Write(id, data, length);
         }
@@ -178,17 +175,15 @@ void Client::transmitterThreadFunc()
     }
 
     sleep(5);
-    std::cout <<"\n"<< "wątek transmitter KOŃCZY PRACĘ dla klienta " << id;
+    std::cout<< "transmitterThreadFunc: wątek transmitter KOŃCZY PRACĘ dla klienta " << id <<"\n";
 }
 
 void Client::receiverThreadFunc()
 {
     size_t  length;
     uint8_t * data;
-    bool isRunning = 1;
-    Message msg;
-
-    //TODO isRunning FLP zwraca 0 i 1 kiedy finalnie oryginalnie jak ma byc? Isrunning czy isStoped?
+    bool isRunning;
+    SLPPacket msg;
 
     while (1)
     {
@@ -196,7 +191,11 @@ void Client::receiverThreadFunc()
         isRunning = FLP_Read(id, &data, &length);
         if (isRunning) //jeśli odczytana poprawnie
         {
-            msg = Message(data, length);
+            //twórz obiekt wiadomości z bufora danych
+            msg = SLPPacket(data, length);
+
+            //zwolnij pamieć
+            free (data);
 
             //weź dostęp do kolejki
             receiverMutex.lock();
@@ -210,7 +209,7 @@ void Client::receiverThreadFunc()
 
 
     sleep(5);
-    std::cout <<"\n"<< "wątek receiver KOŃCZY PRACĘ dla klienta " << id;
+    std::cout<< "receiverThreadFunc: wątek receiver KOŃCZY PRACĘ dla klienta " << id <<"\n";
 }
 
 #endif //TTCHAT_CLIENT_H

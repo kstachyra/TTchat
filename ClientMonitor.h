@@ -64,7 +64,7 @@ public:
         //jeśli klient nie istnieje w mapie
         if (clients.find(clientId) == clients.end())
         {
-            std::cout <<"\n"<< "klient, którego chcemy usunąć nie istnieje w mapie";
+            std::cout << "removeClient: klient, którego chcemy usunąć nie istnieje w mapie" <<"\n";
         }
         else
         {
@@ -81,7 +81,7 @@ public:
             if (chatrooms[clients[clientId]->chatroomId]->isEmpty())
             {
 
-                std::cout << "\n" << "BYŁ TO OSTATNI KLIENT, USUWAM CHATROOM " << clients[clientId]->chatroomId;
+                std::cout << "removeClient: BYŁ TO OSTATNI KLIENT, USUWAM CHATROOM " << clients[clientId]->chatroomId <<"\n";
 
                 chatrooms[clients[clientId]->chatroomId]->joinThread();
                 removeChatroom(clients[clientId]->chatroomId);
@@ -103,7 +103,35 @@ public:
         enter();
         uint64_t toReturn = clients[clientId]->chatroomId;
         leave();
+        // musimy odblokować dostęp do monitora
         return toReturn;
+    }
+
+    uint64_t changeChatroomId(FLP_Connection_t *clientId, uint64_t newId)
+    {
+        enter();
+        //usuń ze starego chatroomu
+        chatrooms[clients[clientId]->chatroomId]->removeClient(clients[clientId]);
+        //zmień w kliencie informacje o chatroomie
+        clients[clientId]->chatroomId = newId;
+
+        //jeśli nie ma takiego chatroomu
+        if(chatrooms.find(newId) == chatrooms.end())
+        {
+            //to stwórz
+            addChatroom(newId);
+            //dodajdo klienta do chatroomu
+            chatrooms[newId]->addClient(clients[clientId]);
+            //i uruchom wątek chatroomu
+            chatrooms[newId]->runThread();
+        }
+        else //a jak jest
+        {
+            //to tylko dodaj klienta doń
+            chatrooms[newId]->addClient(clients[clientId]);
+        }
+
+        leave();
     }
 
 private:
@@ -116,7 +144,7 @@ private:
 
     void removeChatroom(uint64_t chatroomId)
     {
-        std::cout << "\n" << "usuwam chatroom " << chatrooms[chatroomId]->id;
+        std::cout << "removeChatroom: usuwam chatroom " << chatrooms[chatroomId]->id <<"\n";
         //zwalniamy pamięć tego chatroomu
         delete chatrooms[chatroomId];
 
