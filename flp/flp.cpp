@@ -55,6 +55,7 @@ static uint8_t *FLP_PopFromQueue(FLP_Queue_t *queue, size_t *length);
 
 /* Event handling */
 static bool FLP_EventSend(int eventFD);
+static bool FLP_EventReceive(int eventFD);
 
 /* Low level network functions */
 static bool FLP_Transmit(FLP_Connection_t *connection, uint8_t *data, size_t length);
@@ -243,6 +244,11 @@ bool FLP_Read(FLP_Connection_t *connection, uint8_t **data, size_t *length)
 
 	// If new data is available...
 	if(FD_ISSET(connection->readQueue.newElementAvailable, &rfds)) {
+
+		// Read from the eventfd to clear semaphore
+		FLP_EventReceive(connection->readQueue.newElementAvailable);
+
+		FLP_LOG("FLP_Read: New data available. Popping from the queue.\n");
 		*data = FLP_PopFromQueue(&connection->readQueue, length);
 		return true;
 	}
@@ -472,6 +478,17 @@ static bool FLP_EventSend(int eventFD)
 	uint64_t value = 1;
 
 	result = write(eventFD, &value, sizeof(value));
+	if(result != sizeof(value)) return false;
+
+	return true;
+}
+
+static bool FLP_EventReceive(int eventFD)
+{
+	ssize_t result;
+	uint64_t value;
+
+	result = read(eventFD, &value, sizeof(value));
 	if(result != sizeof(value)) return false;
 
 	return true;
