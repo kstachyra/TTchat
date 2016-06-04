@@ -7,6 +7,7 @@
 #include <queue>
 #include <mutex>
 #include <iostream>
+#include "MySemaphore.h"
 
 
 class Client
@@ -22,7 +23,7 @@ private:
     std::mutex transmitterMutex;
     std::mutex receiverMutex;
 
-    std::mutex transmitterEmpty;
+    MySemaphore transmitterEmpty;
     //std::mutex receiverEmpty; -> odkomentować w konstruktorach w razie potrzeby
 
     std::thread transmitterThread;
@@ -51,13 +52,13 @@ public:
         //receiverEmpty.lock();
     }*/
 
-    Client(FLP_Connection_t * con, uint64_t chatId)
+    Client(FLP_Connection_t * con, uint64_t chatId) : transmitterEmpty(0)
     {
         this->id = con;
         chatroomId = chatId;
 
         //początkowe wartości mutexów empty na zablokowane
-        transmitterEmpty.lock();
+
         //receiverEmpty.lock();
     }
 
@@ -92,7 +93,8 @@ public:
         transmitterMutex.lock();
         //wrzuć wiadomość do kolejki
 
-        //TODO jeśli była pusta to empty.unlock()
+        //jeśli była pusta to unlock empty
+        if (transmitterQueue.empty()) transmitterEmpty.notify();
 
         transmitterQueue.push(msg);
         //oddaj dostęp do kolejki
@@ -141,7 +143,7 @@ void Client::transmitterThreadFunc()
         //std::cout<<"DSADSADASDASDASDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAaSDAS";
         //TODO ZAWIESZA SIE NA EMPTY! jak odiwiesić gdy chcemy skończyć? :S unlock unlocked?
         //jeśli kolejka pusta, to zawieś się na mutexie empty
-        //transmitterEmpty.lock();
+        transmitterEmpty.wait();
         //weź dostęp do kolejki
         transmitterMutex.lock();
 
@@ -154,9 +156,6 @@ void Client::transmitterThreadFunc()
             //usuń z oryginalnej
             transmitterQueue.pop();
         } //dopóki coś jest w oryginalnej
-
-        //powiedz, że na pewno nic nie będzie w kolejce, jeśli ktoś zdążył coś dodać (trylock) - może zwrócić false i nie zablokować, więc po wejściu do sekcji krytycznej i tak sprawdzamy czy pusta
-        transmitterEmpty.try_lock();
 
         //zwolnij dostęp do oryginalnej kolejki
         transmitterMutex.unlock();
@@ -185,10 +184,8 @@ void Client::receiverThreadFunc()
 {
     size_t  length;
     uint8_t * data;
-    bool isRunning = 1;
+    bool isRunning = true;
     Message msg;
-
-    //TODO isRunning FLP zwraca 0 i 1 kiedy finalnie oryginalnie jak ma byc? Isrunning czy isStoped?
 
     while (1)
     {

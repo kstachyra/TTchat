@@ -3,7 +3,7 @@
 bool FLP_Listen(FLP_Connection_t** connection, int socket)
 {
     *connection = new FLP_Connection_t;
-    return 0;
+    return 1;
 }
 
 bool FLP_Write(FLP_Connection_t *connection, uint8_t *data, size_t length)
@@ -11,7 +11,7 @@ bool FLP_Write(FLP_Connection_t *connection, uint8_t *data, size_t length)
     if (connection->stop==1)
     {
         std::cout << "\n" << "FAKE_FLP: WRITE zwraca 1 -- connection " << connection;
-        return 1;
+        return 0;
     }
 
     //std::cout << "\n" << "FAKE_FLP: WRITE dostał data -- ";
@@ -19,6 +19,7 @@ bool FLP_Write(FLP_Connection_t *connection, uint8_t *data, size_t length)
     {
         //std::cout << *(data+i);
     }
+    return 1;
 }
 
 bool FLP_Read(FLP_Connection_t *connection, uint8_t **data, size_t *length)
@@ -26,7 +27,7 @@ bool FLP_Read(FLP_Connection_t *connection, uint8_t **data, size_t *length)
     if (connection->stop==1)
     {
         std::cout << "\n" << "FAKE_FLP: READ zwraca 1 -- connection " << connection;
-        return 1;
+        return 0;
     }
 
     *length = 10;
@@ -41,7 +42,7 @@ bool FLP_Read(FLP_Connection_t *connection, uint8_t **data, size_t *length)
         (*data)[i] = i;
         //std::cout << (int)i;
     }
-    return 0;
+    return 1;
 }
 
 bool FLP_Close(FLP_Connection_t *connection)

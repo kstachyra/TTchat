@@ -36,7 +36,7 @@ void serverListenThread(int port)
 {
     std::cout <<"\n"<< "wątek nasłuchujący na połączenia uruchomiony";
 
-    bool isRunning = 1;
+    bool isRunning = true;
     FLP_Connection_t *newConnection;
 
     //while(isRunning)
@@ -48,6 +48,7 @@ void serverListenThread(int port)
         //jeśli podany klucz newConnection nie istnieje w mapie
         if (clientMonitor.clients.find(newConnection) == clientMonitor.clients.end())
         {
+            //dodaj go do chatroomu dla nowych klientow
             clientMonitor.addClient(newConnection, 0xFFFFFFFF);
             std::cout <<"\n"<< "dodano klienta " << newConnection << " do monitora klientów";
         }
