@@ -9,7 +9,7 @@ using namespace std;
 void serverListenThread(unsigned short port);
 void serverServiceThread();
 
-int main(int argc,  char* argv[])
+int main(int argc,char* argv[])
 {
     //uruchomienie wątku nasłuchującego na nowe połączenia
     thread listenThread(serverListenThread, 1234);
@@ -46,19 +46,26 @@ void serverListenThread(unsigned short port)
     while(isRunning)
     {
         isRunning = FLP_Listen(&listener, &newConnection, 60000);
-        std::cout<< "serverListenThread: FLP_Listen zwróciło: " << isRunning <<"\n";
 
-        //jeśli podany klucz newConnection nie istnieje w mapie
-        if (clientMonitor.clients.find(newConnection) == clientMonitor.clients.end())
+        if (newConnection == NULL)
         {
-            //dodaj go do chatroomu dla nowych klientow
-            clientMonitor.addClient(newConnection, 0xFFFFFFFF);
-            std::cout<< "serverListenThread: dodano klienta " << newConnection << " do monitora klientów" <<"\n";
+        	std::cout<< "serverListenThread: timeout, FLP_Listen zwraca true" <<"\n";
+        	//TODO sprawdzić czy port jest aktualny czy nie, jeśli nie to zakończyć wątek (nowy powinien już być urucomiony
         }
-        //jeśli istnieje już
         else
         {
-            std::cout<< "serverListenThread: klient próbujący nawiązać połączenie na port nasłuchujący już istnieje w mapie" <<"\n";
+			//jeśli podany klucz newConnection nie istnieje w mapie
+			if (clientMonitor.clients.find(newConnection) == clientMonitor.clients.end())
+			{
+				//dodaj go do chatroomu dla nowych klientow
+				clientMonitor.addClient(newConnection, 0xFFFFFFFF);
+				std::cout<< "serverListenThread: dodano klienta " << newConnection << " do monitora klientów" <<"\n";
+			}
+			//jeśli istnieje już
+			else
+			{
+				std::cout<< "serverListenThread: klient próbujący nawiązać połączenie na port nasłuchujący już istnieje w mapie" <<"\n";
+			}
         }
     }
 
@@ -86,4 +93,5 @@ void serverListenThread(unsigned short port)
 void serverServiceThread()
 {
     std::cout<< "serverServiceThread: uruchomiono wątek serwisowy" <<"\n";
+    //TODO spr czy zmiana portu, spr które przestarzałe chatroomy usunąć z bazy
 }

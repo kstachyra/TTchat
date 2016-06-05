@@ -19,16 +19,16 @@
 #include <unistd.h>
 #include <semaphore.h>
 
-class Semaphore
+class MonitorSemaphore
 {
 public:
 
-	Semaphore( int value )
+	MonitorSemaphore( int value )
 	{
 		if( sem_init( & sem, 0, value ) != 0 )
 			throw "sem_init: failed";
 	}
-	~Semaphore()
+	~MonitorSemaphore()
 	{
 		sem_destroy( & sem );
 	}
@@ -79,7 +79,7 @@ public:
 	}
 
 private:
-	Semaphore w;
+	MonitorSemaphore w;
 	int waitingCount; //liczba oczekujacych watkow
 };
 
@@ -114,7 +114,7 @@ public:
 
 
 private:
-	Semaphore s;
+	MonitorSemaphore s;
 };
 
 #endif //MONITOR_H

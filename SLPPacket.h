@@ -1,6 +1,8 @@
 #ifndef TTCHAT_MESSAGE_H
 #define TTCHAT_MESSAGE_H
 
+//TODO W SLPPacket dac Model/Message
+
 #include <vector>
 #include <string>
 
@@ -21,7 +23,9 @@
 #define MSGSER_LENGTH 48
 #define MSGCLI_LENGTH 40
 
-
+/*
+ * długość wektora dla niezdefiniowanego typu pakietu
+ */
 #define ERR_LENGTH 2
 
 using namespace std;
@@ -85,7 +89,7 @@ public:
     }
 
     /*
-     * poniższe gettery napisane na sztywno dla długości pakietów, ulegną zmianie przy zmianie koncepcji SLP
+     * poniższe settey i gettery napisane na sztywno dla długości pakietów, muszą ulec zmianie przy zmianie SLP
      */
     int getRoomID()
     {
@@ -318,7 +322,7 @@ public:
 
         *data = new uint8_t[*length];
 
-        for (int i=0; i<*length; ++i)
+        for (size_t i=0; i<*length; ++i)
         {
             (*data)[i] = vec[i];
         }

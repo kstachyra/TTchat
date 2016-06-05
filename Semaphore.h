@@ -4,9 +4,10 @@
 #include <mutex>
 #include <condition_variable>
 
-class MySemaphore {
+class Semaphore
+{
 public:
-    MySemaphore (int count_ = 0)
+    Semaphore (int count_ = 0)
             : count(count_) {}
 
     inline void notify()
