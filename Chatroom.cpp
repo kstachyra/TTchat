@@ -130,7 +130,22 @@ void Chatroom::SUBREQManage(SLPPacket* msg, Client* c)
 
 void Chatroom::UNSUBManage(SLPPacket* msg, Client* c)
 {
+	uint64_t newChatroomId = msg->getChatroomId();
 
+	SLPPacket ans = SLPPacket(SLPPacket::ROOMINF);
+
+	//TODO pobrać dane z bazy danych i wstawić
+	ans.setChatroomId(newChatroomId);
+	ans.setLastMessageID(15);
+	ans.setNumberOFMessages(5);
+	//
+
+	std::cout<<"GETINFManage: wysyłam";
+	ans.print();
+	std::cout<<"\n";
+
+
+	c->addToTransmitter(ans);
 }
 void GETINFManage(SLPPacket* msg, Client* c)
 {
