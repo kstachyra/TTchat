@@ -23,8 +23,8 @@ private:
     std::thread chatroomThread;
 
 public:
-    Chatroom()
-    {}
+    /*Chatroom()
+    {}*/
 
     Chatroom(uint64_t id)
     {
@@ -119,7 +119,7 @@ void Chatroom::chatroomThreadFunc()
 
 void Chatroom::manageQueueMessages()
 {
-    //!!!TODO ogarniaj co trzeba zrobic ze wszystkimi wiaodmosciami aż wszystkie obsłużysz
+    //!!!TODO ogarniaj co trzeba zrobic ze wszystkimi wiaodmosciami aż wszystkie obsłużysz, można dać mapę na funkcję w różnych przypadkach
     SLPPacket msg;
     while (!chatroomQueue.empty())
     {

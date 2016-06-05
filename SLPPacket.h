@@ -4,6 +4,26 @@
 #include <vector>
 #include <string>
 
+/*
+ * długości pakietów protokołu SLP
+ */
+#define SUBREQ_LENGTH 6
+#define SUBACK_LENGTH 6
+#define SUBREF_LENGTH 10
+#define UNSUB_LENGTH 6
+#define GETINF_LENGTH 6
+#define ROOMINF_LENGTH 14
+#define PULLMSGS_LENGTH 14
+
+/*
+ * bazowe długości zmiennej długości pakietów protokołu SLP (bez payloadlength)
+ */
+#define MSGSER_LENGTH 48
+#define MSGCLI_LENGTH 40
+
+
+#define ERR_LENGTH 2
+
 using namespace std;
 
 class SLPPacket
@@ -15,7 +35,6 @@ public:
 private:
     messageType type;
 
-    /* długość wiadomości w bajtach (nie liczac typu)*/
     int vecLength;
     std::vector < uint8_t > vec;
 
@@ -26,6 +45,7 @@ public:
     SLPPacket()
     {
         this->type = ERR;
+        resizeVec();
     }
 
     /*
@@ -53,8 +73,8 @@ public:
     {
     	vecLength = length;
         vec.assign (data,data+length);
+        setTypeFromVec();
     }
-
 
     /*
      * settery i gettery
@@ -64,14 +84,17 @@ public:
     	return this->type;
     }
 
-    /*int getRoomID()
+    /*
+     * poniższe gettery napisane na sztywno dla długości pakietów, ulegną zmianie przy zmianie koncepcji SLP
+     */
+    int getRoomID()
     {
         if (type == ERR)
         {
             std::cout<< "SLPPacket: nie można odczytać RoomID dla Message typu ERR" <<"\n";
             return -1;
         }
-        return toInt(0, 3);
+        return toInt(2, 5);
     }
 
     void setRoomID(int id)
@@ -82,7 +105,7 @@ public:
         }
         else
         {
-            intToVec(id, 0, 3);
+            intToVec(id, 2, 5);
         }
     }
 
@@ -90,7 +113,7 @@ public:
     {
         if (type == SUBREF)
         {
-            return toInt(4, 7);
+            return toInt(6, 9);
         }
         std::cout<< "SLPPacket: błędny typ Message dla getReason" <<"\n";
         return -1;
@@ -100,7 +123,7 @@ public:
     {
         if (type == SUBREF)
         {
-            intToVec(reason, 4, 7);
+            intToVec(reason, 6, 9);
         }
         else std::cout<< "SLPPacket: błędny typ Message dla setReason" <<"\n";
     }
@@ -109,11 +132,11 @@ public:
     {
         if (type == ROOMINF)
         {
-            return toInt(4, 7);
+            return toInt(6, 9);
         }
         else if (type == PULLMSGS)
         {
-            return toInt(8, 11);
+            return toInt(10, 13);
         }
         std::cout<< "SLPPacket: błędny typ Message dla getLastMessageID" <<"\n";
         return -1;
@@ -123,11 +146,11 @@ public:
     {
         if (type == ROOMINF)
         {
-            intToVec(id, 4, 7);
+            intToVec(id, 6, 9);
         }
         else if (type == PULLMSGS)
         {
-            intToVec(id, 8, 11);
+            intToVec(id, 10, 3);
         }
         else std::cout<< "SLPPacket: błędny typ Message dla setLastMessageID" <<"\n";
     }
@@ -136,7 +159,7 @@ public:
     {
         if (type == ROOMINF)
         {
-            return toInt(8, 11);
+            return toInt(10, 13);
         }
         std::cout<< "SLPPacket: błędny typ Message dla getLastMessageID" <<"\n";
         return -1;
@@ -146,7 +169,7 @@ public:
     {
         if (type == ROOMINF)
         {
-            intToVec(num, 8, 11);
+            intToVec(num, 10, 13);
         }
         else std::cout<< "SLPPacket: błędny typ Message dla setLastMessageID" <<"\n";
     }
@@ -155,7 +178,7 @@ public:
     {
         if (type == PULLMSGS)
         {
-            return toInt(4, 7);
+            return toInt(6, 9);
         }
         std::cout<< "SLPPacket: błędny typ Message dla getFirstMessageID" <<"\n";
         return -1;
@@ -165,7 +188,7 @@ public:
     {
         if (type == PULLMSGS)
         {
-            intToVec(id, 4, 7);
+            intToVec(id, 6, 9);
         }
         else std::cout<< "SLPPacket: błędny typ Message dla setFirstMessageID" <<"\n";
     }
@@ -174,7 +197,7 @@ public:
     {
         if (type == MSGSER)
         {
-            return toInt(8, 11);
+            return toInt(10, 13);
         }
         std::cout<< "SLPPacket: błędny tym Message dla getMessageID" <<"\n";
         return -1;
@@ -184,7 +207,7 @@ public:
     {
         if (type == MSGSER)
         {
-            intToVec(id, 8, 11);
+            intToVec(id, 10, 13);
         }
         else std::cout<< "SLPPacket: błędny typ Message dla setMessageID" <<"\n";
     }
@@ -193,7 +216,7 @@ public:
     {
         if (type == MSGSER)
         {
-            return toInt(12, 15);
+            return toInt(14, 17);
         }
         std::cout<< "SLPPacket: błędny tym Message dla getTime" <<"\n";
         return -1;
@@ -203,7 +226,7 @@ public:
     {
         if (type == MSGSER)
         {
-            intToVec(timestamp, 12, 15);
+            intToVec(timestamp, 14, 17);
         }
         else std::cout<< "SLPPacket: błędny typ Message dla setTime" <<"\n";
     }
@@ -212,11 +235,11 @@ public:
     {
         if (type == MSGSER)
         {
-            return toString(12, 43);
+            return toString(14, 45);
         }
         else if (type == MSGCLI)
         {
-            return toString(4, 35);
+            return toString(6, 37);
         }
         std::cout<< "SLPPacket: błędny typ Message dla getNick" <<"\n";
         return NULL;
@@ -226,11 +249,11 @@ public:
     {
         if (type == MSGSER)
         {
-            stringToVec(nick, 12, 43);
+            stringToVec(nick, 14, 45);
         }
         else if (type == MSGCLI)
         {
-            stringToVec(nick, 4, 35);
+            stringToVec(nick, 6, 37);
         }
         else std::cout<< "SLPPacket: błędny typ Message dla setNick" <<"\n";
     }
@@ -239,11 +262,11 @@ public:
     {
         if (type == MSGSER)
         {
-            return toInt(44, 45);
+            return toInt(46, 47);
         }
         else if (type == MSGCLI)
         {
-            return toInt(36, 37);
+            return toInt(38, 39);
         }
         std::cout<< "SLPPacket: błędny typ Message dla getMessageLength" <<"\n";
         return -1;
@@ -253,11 +276,11 @@ public:
     {
         if (type == MSGSER)
         {
-            intToVec(length, 44, 45);
+            intToVec(length, 46, 47);
         }
         else if (type == MSGCLI)
         {
-            intToVec(length, 36, 37);
+            intToVec(length, 38, 39);
         }
         else std::cout<< "SLPPacket: błędny typ Message dla setMessageLength" <<"\n";
     }
@@ -266,11 +289,11 @@ public:
     {
         if (type == MSGSER)
         {
-            return toString(46, 46+getMessageLength());
+            return toString(48, 48+getMessageLength());
         }
         else if (type == MSGCLI)
         {
-            return toString(38, 38+getMessageLength());
+            return toString(40, 40+getMessageLength());
         }
         std::cout<< "SLPPacket: błędny typ Message dla getMessage" <<"\n";
         return NULL;
@@ -280,14 +303,14 @@ public:
     {
         if (type == MSGSER)
         {
-            stringToVec(msg, 46, 46+getMessageLength());
+            stringToVec(msg, 48, 48+getMessageLength());
         }
         else if (type == MSGCLI)
         {
-            stringToVec(msg, 38, 38+getMessageLength());
+            stringToVec(msg, 40, 40+getMessageLength());
         }
         else std::cout<< "SLPPacket: błędny typ Message dla setMessage" <<"\n";
-    }*/
+    }
 
     void toDataBuffer(uint8_t** data, size_t* length)
     {
@@ -299,13 +322,7 @@ public:
         {
             (*data)[i] = vec[i];
         }
-        switch(this->type)
-        {
-        case SUBACK:
-        	(*data)[0]=0x00;
-        	(*data)[1]=0x11;
-        	break;
-        }
+        setTypeFromVec();
     }
 
     void print()
@@ -373,46 +390,57 @@ private:
     }
 
     /*
+     * ustawia type na podstawie zawartości vectora
+     */
+    void setTypeFromVec()
+    {
+    	if (vec[0] == 0x00 && vec[1] == 0x10) type = SUBREQ;
+    	else if (vec[0] == 0x00 && vec[1] == 0x11) type = SUBACK;
+    	else if (vec[0] == 0x00 && vec[1] == 0x12) type = SUBREF;
+    	else if (vec[0] == 0x00 && vec[1] == 0x13) type = UNSUB;
+    	else if (vec[0] == 0x00 && vec[1] == 0x20) type = GETINF;
+    	else if (vec[0] == 0x00 && vec[1] == 0x21) type = ROOMINF;
+    	else if (vec[0] == 0x00 && vec[1] == 0x30) type = PULLMSGS;
+    	else if (vec[0] == 0x00 && vec[1] == 0x31) type = MSGSER;
+    	else if (vec[0] == 0x00 && vec[1] == 0x32) type = MSGCLI;
+    	else if (vec[0] == 0x00 && vec[1] == 0x00) type = ERR;
+    }
+
+    /*
      * dopasowuje dlugosc wektora dla stalej lub zmiennej dlugosci
      */
     void resizeVec()
     {
-        if (type == MSGSER || type ==MSGCLI)
-        {
-            std::cout<< "SLPPacket: nie podano długości dla Message o zmiennej długości!" <<"\n";
-            this->type = ERR;
-            vecLength = 0;
-        }
-        else if (type == SUBREQ || type == SUBACK || type == UNSUB || type == GETINF)
-        {
-            vecLength = 4;
-        }
-        else if (type == SUBREF)
-        {
-            vecLength = 8;
-        }
-        else if (type == ROOMINF || type == PULLMSGS)
-        {
-            vecLength = 12;
-        }
-        vec.resize(vecLength+2);
+    	switch(type)
+    	{
+    	case SUBREQ: vecLength = SUBREQ_LENGTH; break;
+    	case SUBACK: vecLength = SUBACK_LENGTH; break;
+    	case SUBREF: vecLength = SUBREF_LENGTH; break;
+    	case UNSUB: vecLength = UNSUB_LENGTH; break;
+    	case GETINF: vecLength = GETINF_LENGTH; break;
+    	case ROOMINF: vecLength = ROOMINF_LENGTH; break;
+    	case PULLMSGS: vecLength = PULLMSGS_LENGTH; break;
+    	case ERR: vecLength = ERR_LENGTH; break;
+
+    	default: std::cout<< "SLPPacket.resizeVec: błędny typ pakietu (brak długości)" <<"\n";
+    	}
+    	vec.resize(vecLength);
     }
+
     void resizeVec(int length)
     {
-        if (type == MSGSER)
-        {
-            vecLength = 46 + length;
-        }
-        else if  (type == MSGCLI)
-        {
-            vecLength = 38 + length;
-        }
-        else
-        {
-            std::cout<< "SLPPacket: błędny typ pakietu (podana długość dla pakietu o stałej długości)" <<"\n";
-            this->type = ERR;
-        }
-        vec.resize(vecLength+2);
+    	switch(type)
+    	{
+    	case MSGSER: vecLength = MSGSER_LENGTH + length; break;
+    	case MSGCLI: vecLength = MSGCLI_LENGTH + length; break;
+
+    	default:
+    	{
+    		std::cout<< "SLPPacket: błędny typ pakietu (podana długość dla pakietu o stałej długości)" <<"\n";
+    		this->type = ERR;
+    	}
+    	}
+        vec.resize(vecLength);
     }
 };
 
