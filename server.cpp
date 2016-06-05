@@ -59,7 +59,7 @@ void serverListenThread(unsigned short port)
 			if (clientMonitor.clients.find(newConnection) == clientMonitor.clients.end())
 			{
 				//dodaj go do chatroomu dla nowych klientow
-				clientMonitor.addClient(newConnection, 0xFFFFFFFF);
+				clientMonitor.addClient(newConnection, 0xFFFFFFFFFFFFFFFF);
 				std::cout<< "serverListenThread: dodano klienta " << newConnection << " do monitora klientów" <<"\n";
 			}
 			//jeśli istnieje już

@@ -6,18 +6,21 @@ SLPPacket::SLPPacket()
 {
 	this->type = ERR;
 	resizeVec();
+	setTypeToVec();
 }
 
 SLPPacket::SLPPacket(messageType type)
 {
 	this->type = type;
 	resizeVec();
+	setTypeToVec();
 }
 
 SLPPacket::SLPPacket(messageType type, int length)
 {
 	this->type = type;
 	resizeVec(length);
+	setTypeToVec();
 }
 
 SLPPacket::SLPPacket(uint8_t *data, size_t length)
@@ -26,6 +29,23 @@ SLPPacket::SLPPacket(uint8_t *data, size_t length)
 	vec.assign (data,data+length);
 	setTypeFromVec();
 }
+
+/*SLPPacket(const SLPPacket &pck);
+{
+	if (pck.type==MSGCLI)
+	{
+		this->type = MSGSER;
+		resizeVec(pck.vecLength + 8);
+		setTypeToVec();
+	}
+	else
+	{
+		this->type = ERR;
+		resizeVec();
+		setTypeToVec();
+		std::cout<<"SLPPacket.SLPPacket: wywołano konstruktor dla innego typu niż MSGCLI"
+	}
+}*/
 
 int SLPPacket::getType()
 {
@@ -142,7 +162,7 @@ int SLPPacket::getMessageID()
 {
 	if (type == MSGSER)
 	{
-		return toInt(10, 13);
+		return toInt(6, 9);
 	}
 	std::cout<< "SLPPacket: błędny tym Message dla getMessageID" <<"\n";
 	return -1;
@@ -152,7 +172,7 @@ void SLPPacket::setMessageID(int id)
 {
 	if (type == MSGSER)
 	{
-		intToVec(id, 10, 13);
+		intToVec(id, 6, 9);
 	}
 	else std::cout<< "SLPPacket: błędny typ Message dla setMessageID" <<"\n";
 }
@@ -161,7 +181,7 @@ int SLPPacket::getTime()
 {
 	if (type == MSGSER)
 	{
-		return toInt(14, 17);
+		return toInt(11, 14);
 	}
 	std::cout<< "SLPPacket: błędny tym Message dla getTime" <<"\n";
 	return -1;
@@ -171,7 +191,7 @@ void SLPPacket::setTime(int timestamp)
 {
 	if (type == MSGSER)
 	{
-		intToVec(timestamp, 14, 17);
+		intToVec(timestamp, 11, 14);
 	}
 	else std::cout<< "SLPPacket: błędny typ Message dla setTime" <<"\n";
 }
@@ -275,22 +295,22 @@ void SLPPacket::print()
 	std::cout<<"SLPPacket.print: ";
 	for (int i=0; i<vecLength; ++i)
 	{
-		printf("%02x", vec[i]);
+		printf("%02x.", vec[i]);
 	}
 	std::cout<<"\n";
 }
 
 int SLPPacket::toInt(int first, int last)
 {
-	int Int32 = 0;
+	uint64_t Int64 = 0;
 	for (int i = last; i >= first; --i)
 	{
-		Int32 = (Int32 << 8) + vec[i];
+		Int64 = (Int64 << 8) + vec[i];
 	}
-	return Int32;
+	return Int64;
 }
 
-void SLPPacket::intToVec(int value, int first, int last)
+void SLPPacket::intToVec(uint64_t value, int first, int last)
 {
 	for (int i=first; i<=last; ++i)
 	{
@@ -333,7 +353,7 @@ void SLPPacket::setTypeFromVec()
 	else if (vec[0] == 0x00 && vec[1] == 0x00) type = ERR;
 }
 
-void SLPPacket::SetTypeToVec()
+void SLPPacket::setTypeToVec()
 {
 	switch(type)
 	{

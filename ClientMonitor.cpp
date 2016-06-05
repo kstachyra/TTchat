@@ -68,8 +68,9 @@ void ClientMonitor::removeClient(FLP_Connection_t * clientId)
 
 			//skoro to był ostatni klient w chatroomie, to wątek chatroomu niebawem skończy pracę
 			//TODO joinować czy detachować?
-			chatrooms[clients[clientId]->chatroomId]->joinThread();
-			removeChatroom(clients[clientId]->chatroomId);
+			//chatrooms[clients[clientId]->chatroomId]->joinThread();
+			//removeChatroom(clients[clientId]->chatroomId);
+			//TODO ŻŻŻŻŻŻŻŻŻŻŻŻŻŻŻŻŻŻŻŹŹŹŹŹŹŹŹŹŹŹŹŹŹŁŁŁŁŁŁŁŁŁŁŁŁŁŁŁŁŁŁŁĘĘĘĘĘĘĘĘĘĘĘĘĘĘĘĘĘĘĘĘĘĘ
 		}
 
 		//zwalniamy pamięć tego klienta

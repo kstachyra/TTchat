@@ -64,6 +64,11 @@ public:
     SLPPacket(uint8_t *data, size_t length);
 
     /*
+     * konstruktor MSGCLI -> MSGSER
+     */
+    //SLPPacket(const SLPPacket pck);
+
+    /*
      * settery i gettery
      */
     int getType();
@@ -126,7 +131,7 @@ private:
      * konwertuje inta na bajty i zapisuje je w podany zakres
      * (WAŻNE - int to 4 bajty, brak kontroli tego)
      */
-    void intToVec(int value, int first, int last);
+    void intToVec(uint64_t value, int first, int last);
 
     /*
      * konwertuje zakres bajtów z vectora do stringa i go zwraca
@@ -146,7 +151,7 @@ private:
     /*
      * ustawia VECTOR NA PODSTAWIE TYPU
      */
-    void SetTypeToVec();
+    void setTypeToVec();
 
     /*
      * dopasowuje dlugosc wektora dla stalej lub zmiennej dlugosci

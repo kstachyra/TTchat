@@ -53,17 +53,17 @@ void Chatroom::chatroomThreadFunc()
     {
         listMutex.lock();
         //dla każdego klienta w rozmowie
-        std::cout<< "chatroomThreadFunc: chatroom " << id << " ma w swojej kolejce wiadomosci " << chatroomQueue.size() <<"\n";
+        //std::cout<< "chatroomThreadFunc: chatroom " << id << " ma w swojej kolejce wiadomosci " << chatroomQueue.size() <<"\n";
         for (auto it = clientList.begin(); it != clientList.end(); ++it)
         {
             std::queue < SLPPacket > tempQueue;
-            std::cout << "chatroomThreadFunc: chatroom " << id << " pobiera wiadomości z receiverQueue dla klienta " << (*it)->id <<"\n";
+            //std::cout << "chatroomThreadFunc: chatroom " << id << " pobiera wiadomości z receiverQueue dla klienta " << (*it)->id <<"\n";
             (*it)->getFromReceiver(&tempQueue);
             //TODO dać empty na receiver queue i wywalić wtedy sleepa
             //ale nie może się wątek chatroomu zablokować na jednym tylko z klientów - dać nowy wątek dla każdego klienta dla chatroomu?
             //dać jakieś sprawdzanie wspólne wszystkich semaforów
             //po sprawdzeniu wszystkich klientów chatroom może się zawiesić na swoim semaforze, a każdy z klientów może go obudzić -> NAJLEPSZY POMYSŁ CHYBA
-            sleep(5);
+            //sleep(1);
 
             //dla wszystkich nowopobranych wiadomości
             while (!tempQueue.empty())
@@ -74,7 +74,7 @@ void Chatroom::chatroomThreadFunc()
                 tempQueue.pop();
             }
         }
-        std::cout<< "chatroomThreadFunc: watek czatroomu " << id << " ppobrał wiadomości dla " << clientList.size() << " klientow" <<"\n";
+        //std::cout<< "chatroomThreadFunc: watek czatroomu " << id << " ppobrał wiadomości dla " << clientList.size() << " klientow" <<"\n";
         //odblokuj listę, żeby w trakcie manageQueueMassages był do niej dostęp na dodawanie i odejmowanie klientów
         listMutex.unlock();
 
@@ -83,6 +83,7 @@ void Chatroom::chatroomThreadFunc()
         //zapisujemy tu informacje o ostatnim stanie pustosci listy
         listMutex.lock();
         if (clientList.empty()) toStop = 1;
+        //std::cout<< "chatroomThreadFunc: watek czatroomu " << id << " ma " << clientList.size() << " klientow" <<"\n";
         listMutex.unlock();
         //żeby uniknąć nie odblokowania mutexa
         //TODO co jeśli w tej chwili dodamy klienta do chatroomu?
@@ -121,7 +122,7 @@ void Chatroom::SUBREQManage(SLPPacket* msg, Client* c)
 {
 	uint64_t newChatroomId = msg->getChatroomId();
 
-	//.changeChatroomId(c->id, newChatroomId);
+	//TODOclientMonitor.changeChatroomId(c->id, newChatroomId);
 
 	SLPPacket ans = SLPPacket(SLPPacket::SUBACK);
 	ans.setChatroomId(newChatroomId);
@@ -142,8 +143,8 @@ void Chatroom::GETINFManage(SLPPacket* msg, Client* c)
 
 	//TODO pobrać dane z bazy danych i wstawić
 	ans.setChatroomId(newChatroomId);
-	ans.setLastMessageID(15);
-	ans.setNumberOFMessages(5);
+	ans.setLastMessageID(20);
+	ans.setNumberOFMessages(12);
 	//
 
 	std::cout<<"GETINFManage: wysyłam";
@@ -153,12 +154,56 @@ void Chatroom::GETINFManage(SLPPacket* msg, Client* c)
 
 	c->addToTransmitter(ans);
 }
+/*
+ * wysyła pożądane wiadomości do
+ */
 void Chatroom::PULLMSGSManage(SLPPacket* msg, Client* c)
 {
+	uint64_t chatroomId = msg->getChatroomId();
+	int first = msg->getFirstMessageID();
+	int last = msg->getLastMessageID();
 
+	SLPPacket ans = SLPPacket(SLPPacket::MSGSER, 80);
+	for (int i = last; i>=first; --i)
+	{
+		//TODO dobierz się z modelu tutaj
+		ans.setChatroomId(chatroomId);
+		ans.setMessageID(i);
+		ans.setTime(555+i);
+		ans.setNick("Kacper");
+		ans.setMessageLength(80);
+		ans.setMessage(std::to_string(i));
+		std::cout<<"AAAAAAAAAAAAAAA: " <<std::to_string(i)<<"\n";
+
+
+		std::cout<<"PULLMSGSManage: wysyłam";
+		ans.print();
+		std::cout<<"\n";
+
+		usleep(55000); //TODO: !!! FLPWRITE
+		c->addToTransmitter(ans);
+	}
 }
 void Chatroom::MSGCLIManage(SLPPacket* msg, Client* c)
 {
+	SLPPacket ans = SLPPacket(SLPPacket::MSGSER, msg->getMessageLength());
+
+	std::cout<<msg->getNick() << ": " <<msg->getMessage()<< "\n";
+	std::cout<<msg->getChatroomId() <<"\n";
+
+	ans.setChatroomId(msg->getChatroomId());
+	ans.setMessageID(1234);
+	ans.setTime(5555);
+	ans.setNick(msg->getNick());
+	ans.setMessageLength(msg->getMessageLength());
+	ans.setMessage(msg->getMessage());
+
+	for (auto it = clientList.begin(); it!= clientList.end(); ++it)
+	{
+		(*it)->addToTransmitter(ans);
+	}
+
+	//TODO dodaj do bazy
 
 }
 
