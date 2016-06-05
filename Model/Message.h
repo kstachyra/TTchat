@@ -12,12 +12,15 @@
 
 using namespace std;
 
+#define MESSAGE_NICK_LENGTH					32
+
 class Message {
 public:
 	uint32_t id;
 	uint32_t timestamp;
-	uint8_t nick[32];
-	vector<uint8_t> payload;
+	uint8_t nick[MESSAGE_NICK_LENGTH];
+	uint8_t *payload;
+	size_t payloadLength;
 };
 
 #endif /* MODEL_MESSAGE_H_ */
