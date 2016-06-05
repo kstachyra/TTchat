@@ -130,6 +130,10 @@ void Chatroom::SUBREQManage(SLPPacket* msg, Client* c)
 
 void Chatroom::UNSUBManage(SLPPacket* msg, Client* c)
 {
+	
+}
+void GETINFManage(SLPPacket* msg, Client* c)
+{
 	uint64_t newChatroomId = msg->getChatroomId();
 
 	SLPPacket ans = SLPPacket(SLPPacket::ROOMINF);
@@ -146,10 +150,6 @@ void Chatroom::UNSUBManage(SLPPacket* msg, Client* c)
 
 
 	c->addToTransmitter(ans);
-}
-void GETINFManage(SLPPacket* msg, Client* c)
-{
-
 }
 void PULLMSGSManage(SLPPacket* msg, Client* c)
 {
