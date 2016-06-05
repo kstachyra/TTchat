@@ -1,4 +1,6 @@
 #include "Chatroom.h"
+#include <unistd.h>
+#include "global.h"
 
 Chatroom::Chatroom(uint64_t id)
 {
@@ -128,11 +130,11 @@ void Chatroom::SUBREQManage(SLPPacket* msg, Client* c)
   	c->addToTransmitter(ans);
 }
 
-void Chatroom::UNSUBManage(SLPPacket* msg, Client* c)
+void Chatroom::Chatroom::UNSUBManage(SLPPacket* msg, Client* c)
 {
 	
 }
-void GETINFManage(SLPPacket* msg, Client* c)
+void Chatroom::GETINFManage(SLPPacket* msg, Client* c)
 {
 	uint64_t newChatroomId = msg->getChatroomId();
 
@@ -151,11 +153,11 @@ void GETINFManage(SLPPacket* msg, Client* c)
 
 	c->addToTransmitter(ans);
 }
-void PULLMSGSManage(SLPPacket* msg, Client* c)
+void Chatroom::PULLMSGSManage(SLPPacket* msg, Client* c)
 {
 
 }
-void MSGCLIManage(SLPPacket* msg, Client* c)
+void Chatroom::MSGCLIManage(SLPPacket* msg, Client* c)
 {
 
 }

@@ -1,5 +1,7 @@
 #include "SLPPacket.h"
 
+#include <iostream>
+
 SLPPacket::SLPPacket()
 {
 	this->type = ERR;

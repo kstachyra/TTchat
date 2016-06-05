@@ -3,6 +3,7 @@
 
 #include "ClientMonitor.h"
 #include "flp/flp.h"
+#include "global.h"
 
 using namespace std;
 

@@ -1,7 +1,13 @@
 #ifndef TTCHAT_CONVERSATION_H
 #define TTCHAT_CONVERSATION_H
 
+#include "SLPPacket.h"
+#include "Client.h"
+
+#include <mutex>
 #include <list>
+#include <thread>
+#include <queue>
 
 
 using namespace std;
