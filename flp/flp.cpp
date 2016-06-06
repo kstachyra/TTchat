@@ -205,6 +205,10 @@ bool FLP_Write(FLP_Connection_t *connection, uint8_t *data, size_t length)
 
 	// If ACK was received...
 	if(FD_ISSET(connection->ackReceived, &rfds)) {
+
+		// Read from the eventfd to clear semaphore
+		FLP_EventReceive(connection->ackReceived);
+
 		FLP_LOG("FLP_Write: ACK received.\n");
 		return true;
 	}
