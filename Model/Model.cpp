@@ -28,6 +28,42 @@ bool Model::connect(string host, string user, string password)
 	return true;
 }
 
+bool Model::getPort(uint32_t* port)
+{
+	QueryBuilder query(&this->connection);
+
+	query.put("SELECT port FROM configuration ORDER BY conf_id DESC LIMIT 1", false);
+
+	if(mysql_real_query(&this->connection, (const char*)query.getQuery(), (unsigned long)query.getLength())) {
+		finishWithError("Model::getPort", &this->connection);
+		return false;
+	}
+
+	MYSQL_RES *result;
+
+	if((result = mysql_store_result(&this->connection)) == NULL) {
+		finishWithError("Model::getPort", &this->connection);
+		return false;
+	}
+
+	int num_fields = mysql_num_fields(result);
+	if(num_fields != 1) {
+		finishWithError("Model::getPort", &this->connection);
+		return false;
+	}
+
+	MYSQL_ROW row;
+
+	if(!(row = mysql_fetch_row(result))) {
+		finishWithError("Model::getPort", &this->connection);
+		return false;
+	}
+
+	*port = atoi(row[0]);
+
+	return true;
+}
+
 bool Model::getLastMessageId(uint32_t chatRoomId, uint32_t* messageID)
 {
 	QueryBuilder query(&this->connection);

@@ -15,6 +15,7 @@ int main(int argc,char* argv[])
 {
 	//połączenie z bazą, tworzenie modelu
 	Model model;
+
 	if(!model.connect("192.168.43.181", "krystian", "tajne"))
 	{
 			std::cout<<"Model::connect failed.\n";
