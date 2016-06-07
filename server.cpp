@@ -55,6 +55,7 @@ void serverListenThread(unsigned short port)
         }
         else
         {
+        	std::cout<< "serverListenThread: nowe połączenie" <<"\n";
 			//jeśli istnieje już
         	if (clientMonitor.clients.find(newConnection) != clientMonitor.clients.end())
 			{
@@ -72,23 +73,6 @@ void serverListenThread(unsigned short port)
         }
     }
 
-    /*sleep(4);
-    auto temp = clientMonitor.clients.begin();
-    std::cout <<"zmieniam CHATROOM ID dla pierwszego klienta " << (*temp).first <<"\n";
-    clientMonitor.changeChatroomId((*temp).first, 0xFABFABFA);*/
-    /*//tymczasowe usuwanie kientów
-    for (auto it = clientMonitor.clients.begin(); it != clientMonitor.clients.end();)
-    {
-        auto temp = it;
-        temp++;
-        sleep(5);
-        std::cout<< "serverListenThread: Usuwam klienta " << (*it).first <<"\n";
-        clientMonitor.removeClient(it->first);
-        std::cout<< "serverListenThread: usunięto klienta " << (*it).first <<"\n";
-
-        it = temp;
-    }*/
-
     FLP_ListenerDeinit(&listener);
 }
 
@@ -96,7 +80,9 @@ void serverServiceThread()
 {
     std::cout<< "serverServiceThread: uruchomiono wątek serwisowy" <<"\n";
     //TODO spr czy zmiana portu, spr które przestarzałe chatroomy usunąć z bazy
-    /*while(1)
+
+
+    while(1)
     {
     	std::cout<<"\n\n";
     	std::cout<<"_____STATUS MONITORA_____\n";
@@ -104,5 +90,5 @@ void serverServiceThread()
     	std::cout<<"chatroomów: " << clientMonitor.chatrooms.size() <<"\n";
     	std::cout<<"\n\n";
     	sleep(5);
-    }*/
+    }
 }

@@ -18,8 +18,6 @@ using namespace std;
 
 class ClientMonitor : private Monitor
 {
-private:
-	static ClientMonitor* instance;
 
 public:
     //mapa identyfikator klienta -> klient
@@ -36,7 +34,7 @@ public:
 
     void addClient(FLP_Connection_t * clientId, uint64_t chatroomId);
 
-    void removeClient(FLP_Connection_t * clientId);
+    void removeClient(FLP_Connection_t * clientId, bool noMutex);
 
     /*uint64_t getChatroomId(FLP_Connection_t *clientId)
     {
@@ -53,6 +51,8 @@ public:
     void addToTransmitter(FLP_Connection_t* c, SLPPacket ans);
 
     void getFromReceiver(FLP_Connection_t* c, std::queue < SLPPacket >* tempQueue);
+
+    bool isClientActive(FLP_Connection_t* c);
 
 private:
     void addChatroom(uint64_t chatroomId);

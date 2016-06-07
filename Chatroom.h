@@ -42,6 +42,8 @@ public:
 
     void removeClient(FLP_Connection_t* c);
 
+    void forceRemoveClient(FLP_Connection_t* c);
+
     bool isEmpty();
 
 private:

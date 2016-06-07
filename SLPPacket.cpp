@@ -292,12 +292,13 @@ void SLPPacket::toDataBuffer(uint8_t** data, size_t* length)
 
 void SLPPacket::print()
 {
-	std::cout<<"SLPPacket.print: ";
+	std::cout<<"╔════════════════════════════════════════════════╗\n";
 	for (int i=0; i<vecLength; ++i)
 	{
 		printf("%02x.", vec[i]);
 	}
 	std::cout<<"\n";
+	std::cout<<"╚════════════════════════════════════════════════╝\n";
 }
 
 int SLPPacket::toInt(int first, int last)

@@ -17,6 +17,9 @@ public:
     FLP_Connection_t *id;
     uint64_t chatroomId;
 
+    //czy klient skończył pracę i nadaje się do zamknięcia
+    bool toClose = false;
+
 private:
     std::queue < SLPPacket > transmitterQueue;
     std::queue < SLPPacket > receiverQueue;
@@ -30,8 +33,6 @@ private:
     std::thread transmitterThread;
     std::thread receiverThread;
 
-    //czy wątki klienta do zamknięcia
-    bool toClose = 0;
 public:
     Client(FLP_Connection_t* con, uint64_t chatId);
 
@@ -43,10 +44,14 @@ public:
 
     void detachThreads();
 
-    /*wpisuje do kolejki transmittera daną (jedną) wiadomość*/
+    /*
+     * wpisuje do kolejki transmittera daną (jedną) wiadomość
+     */
     void addToTransmitter(SLPPacket msg);
 
-    /*przypisuje wszystkie wiadomości z receiverQueue do wskazanej wskaźnikiem tempQueue*/
+    /*
+     * przypisuje wszystkie wiadomości z receiverQueue do wskazanej wskaźnikiem tempQueue
+     */
     void getFromReceiver(std::queue < SLPPacket >* tempQueue);
 
     void close();

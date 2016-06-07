@@ -45,7 +45,9 @@ void Client::addToTransmitter(SLPPacket msg)
 	transmitterMutex.unlock();
 }
 
-/*przypisuje wszystkie wiadomości z receiverQueue do wskazanej wskaźnikiem tempQueue*/
+/*
+ * przypisuje wszystkie wiadomości z receiverQueue do wskazanej wskaźnikiem tempQueue
+ */
 void Client::getFromReceiver(std::queue < SLPPacket >* tempQueue)
 {
 	//weź dostęp do kolejki
@@ -68,6 +70,8 @@ void Client::close()
 {
 	FLP_Close(id);
 	toClose = 1;
+
+	//podnosimy semafor na empty, żeby wątek transmittera się nie zablokował
 	transmitterEmpty.notify();
 }
 

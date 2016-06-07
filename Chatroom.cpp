@@ -38,6 +38,14 @@ void Chatroom::removeClient(FLP_Connection_t* c)
 	listMutex.unlock();
 }
 
+/*
+ * usuwa klienta z listy chatroomu NIE BLOKUJĄC listy, do użytku tylko gdy lista jest zablokowana
+ */
+void Chatroom::forceRemoveClient(FLP_Connection_t* c)
+{
+	clientList.remove(c);
+}
+
 bool Chatroom::isEmpty()
 {
 	bool toReturn = false;
@@ -58,32 +66,44 @@ void Chatroom::chatroomThreadFunc()
     while(1)
     {
         listMutex.lock();
-        //dla każdego klienta w rozmowie
         //std::cout<< "chatroomThreadFunc: chatroom " << id << " ma w swojej kolejce wiadomosci " << chatroomQueue.size() <<"\n";
+
+        //dla każdego klienta w rozmowie
         for (auto it = clientList.begin(); it != clientList.end(); ++it)
         {
-            std::queue < SLPPacket > tempQueue;
-            //std::cout << "chatroomThreadFunc: chatroom " << id << " pobiera wiadomości z receiverQueue dla klienta " << (*it)->id <<"\n";
+        	//sprawdź czy klient jest aktywny
+        	if (!clientMonitor.isClientActive(*it))
+        	{
+            	std::cout<< "chatroomThreadFunc: znalazłem nieaktywnego klienta, usuwam go" <<"\n";
+            	sleep(4);
+        		//jeśli nie, to usuń (będąc wewnątrz listy Chatroomu (parametr true)
+           		//clientMonitor.removeClient((*it)++, true); //TODO jeśli nie będzie aktywnego oczekiwania, to może się cos zjebać, toClose powinno wymusić sprawdzenie przez chatroom aktywności klienta (jakiś nowy mutex? :/)
+        	}
+        	else
+        	{
+        		//pobierz jego wiadomości
 
+				std::queue < SLPPacket > tempQueue;
+				//std::cout << "chatroomThreadFunc: chatroom " << id << " pobiera wiadomości z receiverQueue dla klienta " << (*it)->id <<"\n";
 
-            clientMonitor.getFromReceiver((*it), &tempQueue);
-            //clientMonitor.clients[(*it)]->getFromReceiver(&tempQueue);
+				clientMonitor.getFromReceiver((*it), &tempQueue);
+				//clientMonitor.clients[(*it)]->getFromReceiver(&tempQueue);
 
+				//TODO dać empty na receiver queue i wywalić wtedy sleepa
+				//ale nie może się wątek chatroomu zablokować na jednym tylko z klientów - dać nowy wątek dla każdego klienta dla chatroomu?
+				//dać jakieś sprawdzanie wspólne wszystkich semaforów
+				//po sprawdzeniu wszystkich klientów chatroom może się zawiesić na swoim semaforze, a każdy z klientów może go obudzić -> NAJLEPSZY POMYSŁ CHYBA
+				//sleep(1);
 
-            //TODO dać empty na receiver queue i wywalić wtedy sleepa
-            //ale nie może się wątek chatroomu zablokować na jednym tylko z klientów - dać nowy wątek dla każdego klienta dla chatroomu?
-            //dać jakieś sprawdzanie wspólne wszystkich semaforów
-            //po sprawdzeniu wszystkich klientów chatroom może się zawiesić na swoim semaforze, a każdy z klientów może go obudzić -> NAJLEPSZY POMYSŁ CHYBA
-            //sleep(1);
-
-            //dla wszystkich nowopobranych wiadomości
-            while (!tempQueue.empty())
-            {
-                //włóż je do kolejki chatroomu z informacją, od któ©ego klienta jest to wiadomość
-                chatroomQueue.push( std::make_pair(tempQueue.front(), (*it)));
-                //usuń z tymczasowej
-                tempQueue.pop();
-            }
+				//dla wszystkich nowopobranych wiadomości
+				while (!tempQueue.empty())
+				{
+					//włóż je do kolejki chatroomu z informacją, od któ©ego klienta jest to wiadomość
+					chatroomQueue.push( std::make_pair(tempQueue.front(), (*it)));
+					//usuń z tymczasowej
+					tempQueue.pop();
+				}
+        	}
         }
         //odblokuj listę, żeby w trakcie manageQueueMassages był do niej dostęp na dodawanie i odejmowanie klientów
         listMutex.unlock();
@@ -96,6 +116,8 @@ void Chatroom::chatroomThreadFunc()
         //std::cout<< "chatroomThreadFunc: watek czatroomu " << id << " ma " << clientList.size() << " klientow" <<"\n";
         listMutex.unlock();
         //żeby uniknąć nie odblokowania mutexa
+
+        //TODO co jeśli tutaj dodamy klienta?
 
         //jeśli lista klientów była pusta, to kończymy pracę wątku chatroomu
         if (toStop) break;
@@ -147,7 +169,7 @@ void Chatroom::SUBREQManage(SLPPacket* msg, FLP_Connection_t* c)
 
 void Chatroom::Chatroom::UNSUBManage(SLPPacket* msg, FLP_Connection_t* c)
 {
-	
+	//clientMonitor.removeClient(c, false);
 }
 
 /*
@@ -161,8 +183,8 @@ void Chatroom::GETINFManage(SLPPacket* msg, FLP_Connection_t* c)
 
 	//TODO pobrać dane z bazy danych i wstawić
 	ans.setChatroomId(newChatroomId);
-	ans.setLastMessageID(20);
-	ans.setNumberOFMessages(12);
+	ans.setLastMessageID(100);
+	ans.setNumberOFMessages(100);
 	//
 
 	clientMonitor.addToTransmitter(c, ans);
@@ -189,9 +211,8 @@ void Chatroom::PULLMSGSManage(SLPPacket* msg, FLP_Connection_t* c)
 		ans.setMessageLength(80);
 		ans.setMessage(std::to_string(i));
 
-		std::cout<<"PULLMSGSManage: wysyłam";
+		std::cout<<"PULLMSGSManage: wysyłam" <<"\n";
 		ans.print();
-		std::cout<<"\n";
 
 		clientMonitor.addToTransmitter(c, ans);
 		//clientMonitor.clients[c]->addToTransmitter(ans);
