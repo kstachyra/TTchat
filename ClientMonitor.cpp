@@ -17,6 +17,7 @@ void ClientMonitor::addClient(FLP_Connection_t * clientId, uint64_t chatroomId)
 	//jeśli nie ma takiego chatroomu
 	if(chatrooms.find(chatroomId) == chatrooms.end())
 	{
+		std::cout<<"ClientMonitor.addClient: nie ma takiego chatroomu" << "\n";
 		//to stwórz
 		addChatroom(chatroomId);
 		//dodajdo klienta do chatroomu
@@ -26,6 +27,7 @@ void ClientMonitor::addClient(FLP_Connection_t * clientId, uint64_t chatroomId)
 	}
 	else //a jak jest
 	{
+		std::cout<<"ClientMonitor.addClient: jest taki chatroom" << "\n";
 		//to tylko dodaj klienta doń
 		chatrooms[chatroomId]->addClient(clientId);
 	}
