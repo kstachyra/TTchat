@@ -6,6 +6,9 @@
 #include <vector>
 #include <string>
 
+/* długość niku */
+#define NICK_LENGTH 32
+
 /*
  * długości pakietów protokołu SLP
  */
@@ -102,11 +105,15 @@ public:
 
     int getTime();
 
-    void setTime(int timestamp);
+    void setTime(uint32_t timestamp);
 
     string getNick();
 
+    void getNick(uint8_t* nick);
+
     void setNick(string nick);
+
+    void setNick(uint8_t* nick);
 
     int getMessageLength();
 
@@ -114,7 +121,11 @@ public:
 
     string getMessage();
 
+    void getMessage(uint8_t* msg, size_t length);
+
     void setMessage(string msg);
+
+    void setMessage(uint8_t* payload, size_t length);
 
     void toDataBuffer(uint8_t** data, size_t* length);
 

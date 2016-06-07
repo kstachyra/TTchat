@@ -23,8 +23,8 @@ public:
 	size_t payloadLength;
 
 	/* Pedalskie API dla pedalow */
-	void setNick(string nick);
-	string getNick(void);
+	/*void setNick(string nick);
+	string getNick(void);*/
 };
 
 #endif /* MODEL_MESSAGE_H_ */

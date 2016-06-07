@@ -7,8 +7,9 @@
 
 #include <string.h>
 #include "Message.h"
+#include <string>
 
-void Message::setNick(string nick)
+/* Message::setNick(string nick)
 {
 	// Check if we can fit whole nick in da buffer
 	if(strlen(nick.c_str()) > MESSAGE_NICK_LENGTH - 1) {
@@ -23,7 +24,7 @@ string Message::getNick(void)
 	string nick(this->nick);
 
 	return nick;
-}
+}*/
 
 
 

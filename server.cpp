@@ -8,7 +8,7 @@
 
 using namespace std;
 
-void serverListenThread(unsigned short port);
+void serverListenThread(uint32_t port);
 void serverServiceThread();
 
 int main(int argc,char* argv[])
@@ -20,8 +20,12 @@ int main(int argc,char* argv[])
 			exit(0);
 	}
 
+	//pobierz aktualny port
+	uint32_t port;
+	model.getPort(&port);
+
     //uruchomienie wątku nasłuchującego na nowe połączenia
-    thread listenThread(serverListenThread, 1234);
+    thread listenThread(serverListenThread, port);
     //uruchomienie wątku serwisowego
     thread serviceThread(serverServiceThread);
 
@@ -41,10 +45,9 @@ int main(int argc,char* argv[])
  * wątki serwera
  */
 
-void serverListenThread(unsigned short port)
+void serverListenThread(uint32_t port)
 {
     std::cout<< "serverListenThread: wątek nasłuchujący na połączenia uruchomiony" <<"\n";
-    port = 1234;
 
     bool isRunning = true;
     FLP_Connection_t *newConnection;
@@ -54,12 +57,13 @@ void serverListenThread(unsigned short port)
 
     while(isRunning)
     {
-        isRunning = FLP_Listen(&listener, &newConnection, 1000);
+        isRunning = FLP_Listen(&listener, &newConnection, 5000);
 
         if (newConnection == NULL)
         {
         	std::cout<< "serverListenThread: timeout, FLP_Listen zwraca true" <<"\n";
-        	//TODO sprawdzić czy port jest aktualny czy nie, jeśli nie to zakończyć wątek (nowy powinien już być urucomiony
+        	//aktualizuj port nasłuchujący
+        	model.getPort(&port);
         }
         else
         {

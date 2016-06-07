@@ -181,17 +181,17 @@ int SLPPacket::getTime()
 {
 	if (type == MSGSER)
 	{
-		return toInt(11, 14);
+		return toInt(10, 13);
 	}
 	std::cout<< "SLPPacket: błędny tym Message dla getTime" <<"\n";
 	return -1;
 }
 
-void SLPPacket::setTime(int timestamp)
+void SLPPacket::setTime(uint32_t timestamp)
 {
 	if (type == MSGSER)
 	{
-		intToVec(timestamp, 11, 14);
+		intToVec(timestamp, 10, 13);
 	}
 	else std::cout<< "SLPPacket: błędny typ Message dla setTime" <<"\n";
 }
@@ -210,6 +210,27 @@ string SLPPacket::getNick()
 	return NULL;
 }
 
+void SLPPacket::getNick(uint8_t* nick)
+{
+	if (type == MSGSER)
+	{
+		//return toString(14, 45);
+		for (size_t i=0; i<NICK_LENGTH; ++i)
+		{
+			nick[i] = vec[14+i];
+		}
+	}
+	else if (type == MSGCLI)
+	{
+		//return toString(6, 37);
+		for (size_t i=0; i<NICK_LENGTH; ++i)
+		{
+			nick[i] = vec[6+i];
+		}
+	}
+	std::cout<< "SLPPacket: błędny typ Message dla getNick" <<"\n";
+}
+
 void SLPPacket::setNick(string nick)
 {
 	if (type == MSGSER)
@@ -219,6 +240,27 @@ void SLPPacket::setNick(string nick)
 	else if (type == MSGCLI)
 	{
 		stringToVec(nick, 6, 37);
+	}
+	else std::cout<< "SLPPacket: błędny typ Message dla setNick" <<"\n";
+}
+
+void SLPPacket::setNick(uint8_t* nick)
+{
+	if (type == MSGSER)
+	{
+		//stringToVec(nick, 14, 45);
+		for (size_t i=0; i<NICK_LENGTH; ++i)
+		{
+			vec[14+i] = nick[i];
+		}
+	}
+	else if (type == MSGCLI)
+	{
+		//stringToVec(nick, 6, 37);
+		for (size_t i=0; i<NICK_LENGTH; ++i)
+		{
+			vec[6+i] = nick[i];
+		}
 	}
 	else std::cout<< "SLPPacket: błędny typ Message dla setNick" <<"\n";
 }
@@ -264,6 +306,25 @@ string SLPPacket::getMessage()
 	return NULL;
 }
 
+void SLPPacket::getMessage(uint8_t* msg, size_t length)
+{
+	if (type == MSGSER)
+	{
+		for (size_t i=0; i<length; ++i)
+		{
+			msg[i] = vec[48+i];
+		}
+	}
+	else if (type == MSGCLI)
+	{
+		for (size_t i=0; i<length; ++i)
+		{
+			msg[i] = vec[40+i];
+		}
+	}
+	std::cout<< "SLPPacket: błędny typ Message dla getNick" <<"\n";
+}
+
 void SLPPacket::setMessage(string msg)
 {
 	if (type == MSGSER)
@@ -273,6 +334,28 @@ void SLPPacket::setMessage(string msg)
 	else if (type == MSGCLI)
 	{
 		stringToVec(msg, 40, 40+getMessageLength());
+	}
+	else std::cout<< "SLPPacket: błędny typ Message dla setMessage" <<"\n";
+}
+
+void SLPPacket::setMessage(uint8_t* payload, size_t length)
+{
+	if (type == MSGSER)
+	{
+		//stringToVec(msg, 48, 48+getMessageLength());
+		for (size_t i=0; i<length; ++i)
+		{
+			vec[48+i] = payload[i];
+		}
+
+	}
+	else if (type == MSGCLI)
+	{
+		//stringToVec(msg, 40, 40+getMessageLength());
+		for (size_t i=0; i<length; ++i)
+		{
+			vec[40+i] = payload[i];
+		}
 	}
 	else std::cout<< "SLPPacket: błędny typ Message dla setMessage" <<"\n";
 }

@@ -3,6 +3,9 @@
 #include "global.h"
 #include "Model/Model.h"
 
+#include <chrono>
+#include <time.h>
+
 Chatroom::Chatroom(uint64_t id)
 {
 	this->id = id;
@@ -180,7 +183,14 @@ void Chatroom::GETINFManage(SLPPacket* msg, FLP_Connection_t* c)
 
 	SLPPacket ans = SLPPacket(SLPPacket::ROOMINF);
 
-	model.doesChatroomExist
+
+	bool gogel;
+	model.doesChatRoomExist(chatroomId, &gogel);
+	if (!gogel) //czatroom nie istnieje
+	{
+		//twórz chatroom w bazie danych
+		model.newChatRoom(chatroomId);
+	}
 
 	uint32_t lastId, numMsgs;
 
@@ -198,22 +208,26 @@ void Chatroom::GETINFManage(SLPPacket* msg, FLP_Connection_t* c)
 /*
  * wysyła pożądane wiadomości do klienta
  */
-void Chatroom::PULLMSGSManage(SLPPacket* msg, FLP_Connection_t* c)
+void Chatroom::PULLMSGSManage(SLPPacket* pck, FLP_Connection_t* c)
 {
-	uint64_t chatroomId = msg->getChatroomId();
-	int first = msg->getFirstMessageID();
-	int last = msg->getLastMessageID();
+	uint64_t chatroomId = pck->getChatroomId();
+	uint32_t first = pck->getFirstMessageID();
+	uint32_t last = pck->getLastMessageID();
 
 	SLPPacket ans = SLPPacket(SLPPacket::MSGSER, 80);
-	for (int i = last; i>=first; --i)
+	for (uint32_t i = last; i>=first; --i)
 	{
-		//TODO dobierz się z modelu tutaj
+		Message msg;
+		model.getMessage(chatroomId, i, &msg);
+
 		ans.setChatroomId(chatroomId);
 		ans.setMessageID(i);
-		ans.setTime(555+i);
-		ans.setNick("Kacper");
-		ans.setMessageLength(80);
-		ans.setMessage(std::to_string(i));
+		std::cout<<"czaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaas: "<<msg.timestamp;
+		ans.setTime(msg.timestamp);
+		ans.setNick(msg.nick);
+		ans.setMessageLength(msg.payloadLength);
+
+		ans.setMessage(msg.payload, msg.payloadLength);
 
 		std::cout<<"PULLMSGSManage: wysyłam" <<"\n";
 		ans.print();
@@ -226,22 +240,50 @@ void Chatroom::PULLMSGSManage(SLPPacket* msg, FLP_Connection_t* c)
 /*
  * odbiera wiadomość, wysyła ją do wszystkich w chatroomie i zapsuje do bazy
  */
-void Chatroom::MSGCLIManage(SLPPacket* msg, FLP_Connection_t* c)
+void Chatroom::MSGCLIManage(SLPPacket* pck, FLP_Connection_t* c)
 {
-	SLPPacket ans = SLPPacket(SLPPacket::MSGSER, msg->getMessageLength());
+	SLPPacket ans = SLPPacket(SLPPacket::MSGSER, pck->getMessageLength());
 
-	ans.setChatroomId(msg->getChatroomId());
-	ans.setMessageID(1234);
-	ans.setTime(5555);
-	ans.setNick(msg->getNick());
-	ans.setMessageLength(msg->getMessageLength());
-	ans.setMessage(msg->getMessage());
+	uint64_t chatroomId = pck->getChatroomId();
+	uint64_t payloadLength = pck->getMessageLength();
 
-	for (auto it = clientList.begin(); it!= clientList.end(); ++it)
+	//ustalam id dla tej wiadomości
+	uint32_t nextId;
+	model.getNextMessageId(chatroomId, &nextId);
+
+	uint32_t systemTime;
+	systemTime = time(NULL);
+
+	ans.setChatroomId(pck->getChatroomId());
+	ans.setMessageID(nextId);
+	ans.setTime(systemTime);
+	ans.setNick(pck->getNick());
+	ans.setMessageLength(pck->getMessageLength());
+	ans.setMessage(pck->getMessage());
+	
+	Message msg;
+	msg.id = nextId;
+	msg.timestamp = systemTime;
+
+	pck->getNick(msg.nick);
+
+	uint8_t msgBuf[payloadLength]; //DAĆ DEFINA
+	pck->getMessage(msgBuf, payloadLength);
+	msg.payload = msgBuf;
+
+	msg.payload = msgBuf;
+
+	msg.payloadLength = ans.getMessageLength();
+
+	if (model.newMessage(chatroomId, msg)) //dodaję wiadomość do bazy
 	{
-		clientMonitor.addToTransmitter((*it), ans);
-		//clientMonitor.clients[(*it)]->addToTransmitter(ans);
+		std::cout<<"DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD\n";
+		for (auto it = clientList.begin(); it!= clientList.end(); ++it)
+		{
+			std::cout<<"MSGCLIManage: wysyłam" <<"\n";
+			ans.print();
+			clientMonitor.addToTransmitter((*it), ans);
+			//clientMonitor.clients[(*it)]->addToTransmitter(ans);
+		}
 	}
-
-	//TODO dodaj do bazy
 }
