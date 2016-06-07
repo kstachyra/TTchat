@@ -13,9 +13,7 @@ void serverServiceThread();
 
 int main(int argc,char* argv[])
 {
-	//połączenie z bazą, tworzenie modelu
-	Model model;
-
+	//połączenie z baz
 	if(!model.connect("192.168.43.181", "krystian", "tajne"))
 	{
 			std::cout<<"Model::connect failed.\n";
@@ -56,7 +54,7 @@ void serverListenThread(unsigned short port)
 
     while(isRunning)
     {
-        isRunning = FLP_Listen(&listener, &newConnection, 60000);
+        isRunning = FLP_Listen(&listener, &newConnection, 1000);
 
         if (newConnection == NULL)
         {
