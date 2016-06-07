@@ -1,4 +1,5 @@
 /*
+  opisuje połączenie z DB
 #include <sys/select.h>
 #include <sys/types.h>
 #include <sys/socket.h>
