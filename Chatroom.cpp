@@ -136,6 +136,7 @@ void Chatroom::manageQueueMessages()
 
         std::cout<< "manageQueueMessages: obsługuję wiadomość typu enum " << msg.getType() <<"\n";
         msg.print();
+        std::cout<< "manageQueueMessages: dla klienta: "<< c <<"\n";
 
         switch(msg.getType())
         {
@@ -153,6 +154,8 @@ void Chatroom::SUBREQManage(SLPPacket* msg, FLP_Connection_t* c)
 {
 	uint64_t newChatroomId = msg->getChatroomId();
 
+	std::cout<<"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAa\n";
+
 	clientMonitor.changeChatroomId(c, newChatroomId);
 
 	SLPPacket ans = SLPPacket(SLPPacket::SUBACK);
@@ -163,8 +166,6 @@ void Chatroom::SUBREQManage(SLPPacket* msg, FLP_Connection_t* c)
 
 	clientMonitor.addToTransmitter(c, ans);
 	//TODO nie kopiować ans tylko przekazać adresy
-
-	//clientMonitor.clients[c]->addToTransmitter(ans);
 }
 
 void Chatroom::Chatroom::UNSUBManage(SLPPacket* msg, FLP_Connection_t* c)
