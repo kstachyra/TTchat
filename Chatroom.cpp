@@ -154,13 +154,10 @@ void Chatroom::SUBREQManage(SLPPacket* msg, FLP_Connection_t* c)
 {
 	uint64_t newChatroomId = msg->getChatroomId();
 
-	std::cout<<"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAa\n";
-
 	clientMonitor.changeChatroomId(c, newChatroomId);
 
 	SLPPacket ans = SLPPacket(SLPPacket::SUBACK);
 	ans.setChatroomId(newChatroomId);
-
 
 	//albo sUBREF i usuń klienta
 
