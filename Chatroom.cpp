@@ -64,7 +64,12 @@ void Chatroom::chatroomThreadFunc()
         {
             std::queue < SLPPacket > tempQueue;
             //std::cout << "chatroomThreadFunc: chatroom " << id << " pobiera wiadomości z receiverQueue dla klienta " << (*it)->id <<"\n";
-            clientMonitor.clients[(*it)]->getFromReceiver(&tempQueue);
+
+
+            clientMonitor.getFromReceiver((*it), &tempQueue);
+            //clientMonitor.clients[(*it)]->getFromReceiver(&tempQueue);
+
+
             //TODO dać empty na receiver queue i wywalić wtedy sleepa
             //ale nie może się wątek chatroomu zablokować na jednym tylko z klientów - dać nowy wątek dla każdego klienta dla chatroomu?
             //dać jakieś sprawdzanie wspólne wszystkich semaforów

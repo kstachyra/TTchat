@@ -52,7 +52,7 @@ public:
 
     void addToTransmitter(FLP_Connection_t* c, SLPPacket ans);
 
-    void getFromReceiver(FLP_Connection_t* c, SLPPacket ans);
+    void getFromReceiver(FLP_Connection_t* c, std::queue < SLPPacket >* tempQueue);
 
 private:
     void addChatroom(uint64_t chatroomId);

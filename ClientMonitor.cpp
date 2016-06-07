@@ -137,9 +137,23 @@ void ClientMonitor::addToTransmitter(FLP_Connection_t* c, SLPPacket ans)
 	leave();
 }
 
-void ClientMonitor::getFromReceiver(FLP_Connection_t* c, SLPPacket ans)
+void ClientMonitor::getFromReceiver(FLP_Connection_t* c, std::queue < SLPPacket >* tempQueue)
 {
+	enter();
+	//sprawdza czy klient jeszcze istnieje
 
+	//jeśli nie istnieje
+	if (clients.find(c)==clients.end())
+	{
+		std::cout<<"ClientMonitor.getFromReceiver: klient nie istnieje, ignoruję pobieranie wiadomości" << "\n";
+	}
+	//a jak istnieje
+	else
+	{
+		clients[c]->getFromReceiver(tempQueue);
+	}
+
+	leave();
 }
 
 void ClientMonitor::removeChatroom(uint64_t chatroomId)
