@@ -120,7 +120,7 @@ void Chatroom::chatroomThreadFunc()
         //TODO co jeśli tutaj dodamy klienta?
 
         //jeśli lista klientów była pusta, to kończymy pracę wątku chatroomu
-        if (toStop) break;
+        //if (toStop) break; //TODO OGARNAĆ KONIEC CHATROOMU
     }
     std::cout<< "chatroomThreadFunc: wątek chatroomu kończy pracę " << id <<"\n";
 }
