@@ -5,19 +5,13 @@ ClientMonitor::ClientMonitor(void)
 
 }
 
-/*static ClientMonitor::ClientMonitor* getInstance(void)
-{
-		if(!instance) instance = new ClientMonitor;
-
-		return instance;
-}*/
-
 void ClientMonitor::addClient(FLP_Connection_t * clientId, uint64_t chatroomId)
 {
 	enter();
 
 	//tworz nowy obiekt klienta
 	Client* newClient = new Client(clientId, chatroomId);
+	//wstaw do mapy klientów
 	clients[clientId] = newClient;
 
 	//jeśli nie ma takiego chatroomu
@@ -26,14 +20,14 @@ void ClientMonitor::addClient(FLP_Connection_t * clientId, uint64_t chatroomId)
 		//to stwórz
 		addChatroom(chatroomId);
 		//dodajdo klienta do chatroomu
-		chatrooms[chatroomId]->addClient(newClient);
+		chatrooms[chatroomId]->addClient(clientId);
 		//i uruchom wątek chatroomu
 		chatrooms[chatroomId]->runThread();
 	}
 	else //a jak jest
 	{
 		//to tylko dodaj klienta doń
-		chatrooms[chatroomId]->addClient(newClient);
+		chatrooms[chatroomId]->addClient(clientId);
 	}
 
 	//uuchom wątki klienta
@@ -59,7 +53,7 @@ void ClientMonitor::removeClient(FLP_Connection_t * clientId)
 		clients[clientId]->joinThreads();
 
 		//usuń klienta z chatroomu
-		chatrooms[clients[clientId]->chatroomId]->removeClient(clients[clientId]);
+		chatrooms[clients[clientId]->chatroomId]->removeClient(clientId);
 
 		//sprawdzamy, czy nie usunąć chatroomu (czy nie był to ostatni klient tego chatroomu)
 		if (chatrooms[clients[clientId]->chatroomId]->isEmpty())
@@ -68,11 +62,18 @@ void ClientMonitor::removeClient(FLP_Connection_t * clientId)
 
 			//skoro to był ostatni klient w chatroomie, to wątek chatroomu niebawem skończy pracę
 			//TODO joinować czy detachować?
-			//chatrooms[clients[clientId]->chatroomId]->joinThread();
-			//removeChatroom(clients[clientId]->chatroomId);
+
+			chatrooms[clients[clientId]->chatroomId]->detachThread();
+
+			std::cout<<"AAAAAAAAAAAAAAAAAAAAAAAAAAA \n";
+
+			sleep(2);
+			removeChatroom(clients[clientId]->chatroomId);
+
 			//TODO ŻŻŻŻŻŻŻŻŻŻŻŻŻŻŻŻŻŻŻŹŹŹŹŹŹŹŹŹŹŹŹŹŹŁŁŁŁŁŁŁŁŁŁŁŁŁŁŁŁŁŁŁĘĘĘĘĘĘĘĘĘĘĘĘĘĘĘĘĘĘĘĘĘĘ
 		}
 
+		std::cout<<"CM>.RemoveClient: usuwam DELETEDELETE clienta " << clientId <<"\n";
 		//zwalniamy pamięć tego klienta
 		delete clients[clientId];
 
@@ -87,7 +88,7 @@ void ClientMonitor::changeChatroomId(FLP_Connection_t *clientId, uint64_t newCha
 {
 	enter();
 	//usuń ze starego chatroomu
-	chatrooms[clients[clientId]->chatroomId]->removeClient(clients[clientId]);
+	chatrooms[clients[clientId]->chatroomId]->removeClient(clientId);
 	//zmień w kliencie informacje o chatroomie
 	clients[clientId]->chatroomId = newChatroomId;
 
@@ -97,14 +98,14 @@ void ClientMonitor::changeChatroomId(FLP_Connection_t *clientId, uint64_t newCha
 		//to stwórz
 		addChatroom(newChatroomId);
 		//dodajdo klienta do chatroomu
-		chatrooms[newChatroomId]->addClient(clients[clientId]);
+		chatrooms[newChatroomId]->addClient(clientId);
 		//i uruchom wątek chatroomu
 		chatrooms[newChatroomId]->runThread();
 	}
 	else //a jak jest
 	{
 		//to tylko dodaj klienta doń
-		chatrooms[newChatroomId]->addClient(clients[clientId]);
+		chatrooms[newChatroomId]->addClient(clientId);
 	}
 
 	leave();
@@ -117,9 +118,33 @@ void ClientMonitor::addChatroom(uint64_t chatroomId)
 	chatrooms[chatroomId]=newChatroom;
 }
 
+void ClientMonitor::addToTransmitter(FLP_Connection_t* c, SLPPacket ans)
+{
+	enter();
+	//sprawdza czy klient jeszcze istnieje
+
+	//jeśli nie istnieje
+	if (clients.find(c)==clients.end())
+	{
+		std::cout<<"ClientMonitor.addToTransmitter: klient nie istnieje, ignoruję dodawanie wiadomości" << "\n";
+	}
+	//a jak istnieje
+	else
+	{
+		clients[c]->addToTransmitter(ans);
+	}
+
+	leave();
+}
+
+void ClientMonitor::getFromReceiver(FLP_Connection_t* c, SLPPacket ans)
+{
+
+}
+
 void ClientMonitor::removeChatroom(uint64_t chatroomId)
 {
-    std::cout << "removeChatroom: usuwam chatroom " << chatrooms[chatroomId]->id <<"\n";
+    std::cout << "removeChatroom: usuwam chatroom DELETEDELETE " << chatrooms[chatroomId]->id <<"\n";
     //zwalniamy pamięć tego chatroomu
     delete chatrooms[chatroomId];
 

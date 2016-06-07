@@ -88,15 +88,11 @@ void Client::transmitterThreadFunc()
         std::queue < SLPPacket > tempQueue;
         while (!transmitterQueue.empty())
         {
-        	std::cout<<"TRANSMI Q ma przed pobraniem " << transmitterQueue.size() << "\n";
             //włóż do tymczasowej pierwzy element oryginalnej
             tempQueue.push(transmitterQueue.front());
             //usuń z oryginalnej
             transmitterQueue.pop();
         } //dopóki coś jest w oryginalnej
-
-    	std::cout<<"TRANSMI Q ma PO  pobraniu " << transmitterQueue.size() << "\n";
-
 
         //zwolnij dostęp do oryginalnej kolejki
         transmitterMutex.unlock();
@@ -112,7 +108,8 @@ void Client::transmitterThreadFunc()
             msg.toDataBuffer(&data, &length);
 
             isRunning = FLP_Write(id, data, length);
-        	std::cout<<"FLP WRITE zwraca " << isRunning << "\n";
+
+        	delete data;
 
         }
         if (toClose) break;

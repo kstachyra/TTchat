@@ -18,14 +18,20 @@ void Chatroom::joinThread()
 	std::cout << "Chatroom.joinThread: zjoinowano wątek chatroomu " << id <<"\n";
 }
 
-void Chatroom::addClient(Client* c)
+void Chatroom::detachThread()
+{
+	if (chatroomThread.joinable()) chatroomThread.detach();
+}
+
+
+void Chatroom::addClient(FLP_Connection_t* c)
 {
 	listMutex.lock();
 	clientList.push_back(c);
 	listMutex.unlock();
 }
 
-void Chatroom::removeClient(Client* c)
+void Chatroom::removeClient(FLP_Connection_t* c)
 {
 	listMutex.lock();
 	clientList.remove(c);
@@ -58,7 +64,7 @@ void Chatroom::chatroomThreadFunc()
         {
             std::queue < SLPPacket > tempQueue;
             //std::cout << "chatroomThreadFunc: chatroom " << id << " pobiera wiadomości z receiverQueue dla klienta " << (*it)->id <<"\n";
-            (*it)->getFromReceiver(&tempQueue);
+            clientMonitor.clients[(*it)]->getFromReceiver(&tempQueue);
             //TODO dać empty na receiver queue i wywalić wtedy sleepa
             //ale nie może się wątek chatroomu zablokować na jednym tylko z klientów - dać nowy wątek dla każdego klienta dla chatroomu?
             //dać jakieś sprawdzanie wspólne wszystkich semaforów
@@ -74,7 +80,6 @@ void Chatroom::chatroomThreadFunc()
                 tempQueue.pop();
             }
         }
-        //std::cout<< "chatroomThreadFunc: watek czatroomu " << id << " ppobrał wiadomości dla " << clientList.size() << " klientow" <<"\n";
         //odblokuj listę, żeby w trakcie manageQueueMassages był do niej dostęp na dodawanie i odejmowanie klientów
         listMutex.unlock();
 
@@ -86,7 +91,7 @@ void Chatroom::chatroomThreadFunc()
         //std::cout<< "chatroomThreadFunc: watek czatroomu " << id << " ma " << clientList.size() << " klientow" <<"\n";
         listMutex.unlock();
         //żeby uniknąć nie odblokowania mutexa
-        //TODO co jeśli w tej chwili dodamy klienta do chatroomu?
+
         //jeśli lista klientów była pusta, to kończymy pracę wątku chatroomu
         if (toStop) break;
     }
@@ -95,12 +100,11 @@ void Chatroom::chatroomThreadFunc()
 
 void Chatroom::manageQueueMessages()
 {
-    //!!!TODO ogarniaj co trzeba zrobic ze wszystkimi wiaodmosciami aż wszystkie obsłużysz, można dać mapę na funkcję w różnych przypadkach
     SLPPacket msg;
     while (!chatroomQueue.empty())
     {
         msg = chatroomQueue.front().first;
-        Client* c = chatroomQueue.front().second;
+        FLP_Connection_t* c = chatroomQueue.front().second;
         chatroomQueue.pop();
 
         std::cout<< "manageQueueMessages: obsługuję wiadomość typu enum " << msg.getType() <<"\n";
@@ -118,24 +122,33 @@ void Chatroom::manageQueueMessages()
     }
 }
 
-void Chatroom::SUBREQManage(SLPPacket* msg, Client* c)
+void Chatroom::SUBREQManage(SLPPacket* msg, FLP_Connection_t* c)
 {
 	uint64_t newChatroomId = msg->getChatroomId();
 
-	//TODOclientMonitor.changeChatroomId(c->id, newChatroomId);
+	clientMonitor.changeChatroomId(c, newChatroomId);
 
 	SLPPacket ans = SLPPacket(SLPPacket::SUBACK);
 	ans.setChatroomId(newChatroomId);
+
+
 	//albo sUBREF i usuń klienta
 
-  	c->addToTransmitter(ans);
+	clientMonitor.addToTransmitter(c, ans);
+	//TODO nie kopiować ans tylko przekazać adresy
+
+	//clientMonitor.clients[c]->addToTransmitter(ans);
 }
 
-void Chatroom::Chatroom::UNSUBManage(SLPPacket* msg, Client* c)
+void Chatroom::Chatroom::UNSUBManage(SLPPacket* msg, FLP_Connection_t* c)
 {
 	
 }
-void Chatroom::GETINFManage(SLPPacket* msg, Client* c)
+
+/*
+ * wysyła ChatroomInfo do klienta
+ */
+void Chatroom::GETINFManage(SLPPacket* msg, FLP_Connection_t* c)
 {
 	uint64_t newChatroomId = msg->getChatroomId();
 
@@ -147,17 +160,14 @@ void Chatroom::GETINFManage(SLPPacket* msg, Client* c)
 	ans.setNumberOFMessages(12);
 	//
 
-	std::cout<<"GETINFManage: wysyłam";
-	ans.print();
-	std::cout<<"\n";
-
-
-	c->addToTransmitter(ans);
+	clientMonitor.addToTransmitter(c, ans);
+	//clientMonitor.clients[c]->addToTransmitter(ans);
 }
+
 /*
- * wysyła pożądane wiadomości do
+ * wysyła pożądane wiadomości do klienta
  */
-void Chatroom::PULLMSGSManage(SLPPacket* msg, Client* c)
+void Chatroom::PULLMSGSManage(SLPPacket* msg, FLP_Connection_t* c)
 {
 	uint64_t chatroomId = msg->getChatroomId();
 	int first = msg->getFirstMessageID();
@@ -173,23 +183,22 @@ void Chatroom::PULLMSGSManage(SLPPacket* msg, Client* c)
 		ans.setNick("Kacper");
 		ans.setMessageLength(80);
 		ans.setMessage(std::to_string(i));
-		std::cout<<"AAAAAAAAAAAAAAA: " <<std::to_string(i)<<"\n";
-
 
 		std::cout<<"PULLMSGSManage: wysyłam";
 		ans.print();
 		std::cout<<"\n";
 
-		usleep(55000); //TODO: !!! FLPWRITE
-		c->addToTransmitter(ans);
+		clientMonitor.addToTransmitter(c, ans);
+		//clientMonitor.clients[c]->addToTransmitter(ans);
 	}
 }
-void Chatroom::MSGCLIManage(SLPPacket* msg, Client* c)
+
+/*
+ * odbiera wiadomość, wysyła ją do wszystkich w chatroomie i zapsuje do bazy
+ */
+void Chatroom::MSGCLIManage(SLPPacket* msg, FLP_Connection_t* c)
 {
 	SLPPacket ans = SLPPacket(SLPPacket::MSGSER, msg->getMessageLength());
-
-	std::cout<<msg->getNick() << ": " <<msg->getMessage()<< "\n";
-	std::cout<<msg->getChatroomId() <<"\n";
 
 	ans.setChatroomId(msg->getChatroomId());
 	ans.setMessageID(1234);
@@ -200,14 +209,9 @@ void Chatroom::MSGCLIManage(SLPPacket* msg, Client* c)
 
 	for (auto it = clientList.begin(); it!= clientList.end(); ++it)
 	{
-		(*it)->addToTransmitter(ans);
+		clientMonitor.addToTransmitter((*it), ans);
+		//clientMonitor.clients[(*it)]->addToTransmitter(ans);
 	}
 
 	//TODO dodaj do bazy
-
 }
-
-
-
-
-

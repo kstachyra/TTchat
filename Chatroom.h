@@ -20,12 +20,11 @@ public:
 
 private:
     //lista klientów należących do rozmowy wraz z mutexem
-    list < Client* > clientList;
+    list < FLP_Connection_t* > clientList;
     std::mutex listMutex;
 
-    //kolejka wiadomości do obsłużenia przez wątek chatroomu
-    //std::queue < std::pair < SLPPacket, Client* > > chatroomQueue;
-    std::queue <  std::pair < SLPPacket, Client* > > chatroomQueue;
+    //kolejka wiadomości do obsłużenia przez wątek chatroomu z informacją, który klient ją umieścił
+    std::queue <  std::pair < SLPPacket, FLP_Connection_t* > > chatroomQueue;
 
     //wątek chatroomu
     std::thread chatroomThread;
@@ -37,9 +36,11 @@ public:
 
     void joinThread();
 
-    void addClient(Client* c);
+    void detachThread();
 
-    void removeClient(Client* c);
+    void addClient(FLP_Connection_t* c);
+
+    void removeClient(FLP_Connection_t* c);
 
     bool isEmpty();
 
@@ -50,11 +51,11 @@ private:
     /*
      * funkcje do zarządzania wiadomościami
      */
-    void SUBREQManage(SLPPacket* msg, Client* c);
-    void UNSUBManage(SLPPacket* msg, Client* c);
-    void GETINFManage(SLPPacket* msg, Client* c);
-    void PULLMSGSManage(SLPPacket* msg, Client* c);
-    void MSGCLIManage(SLPPacket* msg, Client* c);
+    void SUBREQManage(SLPPacket* msg, FLP_Connection_t* c);
+    void UNSUBManage(SLPPacket* msg, FLP_Connection_t* c);
+    void GETINFManage(SLPPacket* msg, FLP_Connection_t* c);
+    void PULLMSGSManage(SLPPacket* msg, FLP_Connection_t* c);
+    void MSGCLIManage(SLPPacket* msg, FLP_Connection_t* c);
 };
 
 #endif //TTCHAT_CONVERSATION_H

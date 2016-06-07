@@ -50,6 +50,10 @@ public:
 
     void changeChatroomId(FLP_Connection_t *clientId, uint64_t newChatroomId);
 
+    void addToTransmitter(FLP_Connection_t* c, SLPPacket ans);
+
+    void getFromReceiver(FLP_Connection_t* c, SLPPacket ans);
+
 private:
     void addChatroom(uint64_t chatroomId);
 

@@ -55,17 +55,19 @@ void serverListenThread(unsigned short port)
         }
         else
         {
+			//jeśli istnieje już
+        	if (clientMonitor.clients.find(newConnection) != clientMonitor.clients.end())
+			{
+				std::cout<< "serverListenThread: klient próbujący nawiązać połączenie na port nasłuchujący już istnieje w mapie" <<"\n";
+				//clientMonitor.removeClient(newConnection);
+			}
+
 			//jeśli podany klucz newConnection nie istnieje w mapie
 			if (clientMonitor.clients.find(newConnection) == clientMonitor.clients.end())
 			{
 				//dodaj go do chatroomu dla nowych klientow
 				clientMonitor.addClient(newConnection, 0xFFFFFFFFFFFFFFFF);
 				std::cout<< "serverListenThread: dodano klienta " << newConnection << " do monitora klientów" <<"\n";
-			}
-			//jeśli istnieje już
-			else
-			{
-				std::cout<< "serverListenThread: klient próbujący nawiązać połączenie na port nasłuchujący już istnieje w mapie" <<"\n";
 			}
         }
     }
@@ -74,7 +76,6 @@ void serverListenThread(unsigned short port)
     auto temp = clientMonitor.clients.begin();
     std::cout <<"zmieniam CHATROOM ID dla pierwszego klienta " << (*temp).first <<"\n";
     clientMonitor.changeChatroomId((*temp).first, 0xFABFABFA);*/
-
     /*//tymczasowe usuwanie kientów
     for (auto it = clientMonitor.clients.begin(); it != clientMonitor.clients.end();)
     {
@@ -95,4 +96,13 @@ void serverServiceThread()
 {
     std::cout<< "serverServiceThread: uruchomiono wątek serwisowy" <<"\n";
     //TODO spr czy zmiana portu, spr które przestarzałe chatroomy usunąć z bazy
+    /*while(1)
+    {
+    	std::cout<<"\n\n";
+    	std::cout<<"_____STATUS MONITORA_____\n";
+    	std::cout<<"klientów: " << clientMonitor.clients.size() <<"\n";
+    	std::cout<<"chatroomów: " << clientMonitor.chatrooms.size() <<"\n";
+    	std::cout<<"\n\n";
+    	sleep(5);
+    }*/
 }
