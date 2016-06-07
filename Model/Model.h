@@ -42,6 +42,7 @@ public:
 	bool newMessage(uint32_t chatRoomId, Message message);
 	bool getMessage(uint32_t chatRoomId, uint32_t messageId, Message *message);
 	bool newChatRoom(uint32_t chatRoomId);
+	bool doesChatRoomExist(uint32_t chatRoomId, bool *gogel);
 };
 
 #endif /* MODEL_H_ */

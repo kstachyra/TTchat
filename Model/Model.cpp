@@ -266,3 +266,55 @@ bool Model::newChatRoom(uint32_t chatRoomId)
 
 	return true;
 }
+
+bool Model::doesChatRoomExist(uint32_t chatRoomId, bool *gogel)
+{
+	printf("GOGEL!!!!!!!!!11one\n");
+
+	QueryBuilder query(&this->connection);
+
+	query.put("SELECT COUNT(chatroom_id) FROM chatrooms WHERE chatroom_id = ", false);
+	query.put(chatRoomId);
+
+	MODEL_LOG("Model::doesChatRoomExist: Sending query to database...\n");
+	if(mysql_real_query(&this->connection, (const char*)query.getQuery(), (unsigned long)query.getLength())) {
+		finishWithError("Model::getLastMessageId", &this->connection);
+		return false;
+	}
+
+	MYSQL_RES *result;
+
+	MODEL_LOG("Model::doesChatRoomExist: Storing results...\n");
+	if((result = mysql_store_result(&this->connection)) == NULL) {
+		finishWithError("Model::getLastMessageId", &this->connection);
+		return false;
+	}
+
+	int num_fields = mysql_num_fields(result);
+	MODEL_LOG("Model::doesChatRoomExist: Number of stored fields: %u.\n", num_fields);
+	if(num_fields != 1) {
+		finishWithError("Model::doesChatRoomExist", &this->connection);
+		return false;
+	}
+
+	MYSQL_ROW row;
+
+	MODEL_LOG("Model::doesChatRoomExist: Fetching row...\n");
+	if(!(row = mysql_fetch_row(result))) {
+		finishWithError("Model::doesChatRoomExist", &this->connection);
+		return false;
+	}
+
+	if(row[0] != NULL) {
+		if(atoi(row[0]) == 1) {
+			*gogel = true;
+		} else {
+			*gogel = false;
+		}
+	} else {
+		MODEL_LOG("Model::doesChatRoomExist: WTF?!\n");
+		return false;
+	}
+
+	return true;
+}
