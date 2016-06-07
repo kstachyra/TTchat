@@ -1,6 +1,7 @@
 #include "Chatroom.h"
 #include <unistd.h>
 #include "global.h"
+#include "Model/Model.h"
 
 Chatroom::Chatroom(uint64_t id)
 {
@@ -154,13 +155,10 @@ void Chatroom::SUBREQManage(SLPPacket* msg, FLP_Connection_t* c)
 {
 	uint64_t newChatroomId = msg->getChatroomId();
 
-	std::cout<<"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAa\n";
-
 	clientMonitor.changeChatroomId(c, newChatroomId);
 
 	SLPPacket ans = SLPPacket(SLPPacket::SUBACK);
 	ans.setChatroomId(newChatroomId);
-
 
 	//albo sUBREF i usuń klienta
 
@@ -178,15 +176,20 @@ void Chatroom::Chatroom::UNSUBManage(SLPPacket* msg, FLP_Connection_t* c)
  */
 void Chatroom::GETINFManage(SLPPacket* msg, FLP_Connection_t* c)
 {
-	uint64_t newChatroomId = msg->getChatroomId();
+	uint32_t chatroomId = msg->getChatroomId();
 
 	SLPPacket ans = SLPPacket(SLPPacket::ROOMINF);
 
-	//TODO pobrać dane z bazy danych i wstawić
-	ans.setChatroomId(newChatroomId);
-	ans.setLastMessageID(100);
-	ans.setNumberOFMessages(100);
-	//
+	model.doesChatroomExist
+
+	uint32_t lastId, numMsgs;
+
+	model.getNumOfMessages(chatroomId, &numMsgs);
+	model.getLastMessageId(chatroomId, &lastId);
+
+	ans.setChatroomId(chatroomId);
+	ans.setLastMessageID(lastId);
+	ans.setNumberOFMessages(numMsgs);
 
 	clientMonitor.addToTransmitter(c, ans);
 	//clientMonitor.clients[c]->addToTransmitter(ans);

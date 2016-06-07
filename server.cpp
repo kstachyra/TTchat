@@ -2,9 +2,9 @@
 #include <thread>
 
 #include "ClientMonitor.h"
-#include "Model/Model.h"
 #include "flp/flp.h"
 #include "global.h"
+#include "Model/Model.h"
 
 using namespace std;
 
@@ -13,17 +13,26 @@ void serverServiceThread();
 
 int main(int argc,char* argv[])
 {
-	Model model;
-	uint32_t port;
-
-	if(!model.connect("192.168.43.181", "krystian", "tajne")) {
-		printf("Model::connect failed.\n");
+	//połączenie z baz
+	if(!model.connect("192.168.43.181", "krystian", "tajne"))
+	{
+			std::cout<<"Model::connect failed.\n";
+			exit(0);
 	}
 
-	if(!model.getPort(&port)) {
-		printf("Model::getPort failed.\n");
-	}
-	printf("Port number: %u\n", port);
+    //uruchomienie wątku nasłuchującego na nowe połączenia
+    thread listenThread(serverListenThread, 1234);
+    //uruchomienie wątku serwisowego
+    thread serviceThread(serverServiceThread);
+
+
+
+
+
+
+    //poczekaj na wątki
+    if (listenThread.joinable()) listenThread.join();
+    if (serviceThread.joinable()) serviceThread.join();
 
 	return 0;
 }
@@ -45,7 +54,7 @@ void serverListenThread(unsigned short port)
 
     while(isRunning)
     {
-        isRunning = FLP_Listen(&listener, &newConnection, 60000);
+        isRunning = FLP_Listen(&listener, &newConnection, 1000);
 
         if (newConnection == NULL)
         {
