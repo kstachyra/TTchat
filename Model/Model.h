@@ -35,6 +35,7 @@ private:
 public:
 	Model(void);
 	bool connect(string host, string user, string password);
+	bool getPort(uint32_t* port);
 	bool getLastMessageId(uint32_t chatRoomId, uint32_t* messageID);
 	bool getNextMessageId(uint32_t chatRoomId, uint32_t* messageID);
 	bool getNumOfMessages(uint32_t chatRoomId, uint32_t* numOfMessages);
