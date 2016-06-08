@@ -78,7 +78,7 @@ void Chatroom::chatroomThreadFunc()
         //dla każdego klienta w rozmowie
         for (auto it = clientList.begin(); it != clientList.end(); ++it)
         {
-        	if(clientRemoved) std::cout << "chatroomThreadFunc: Checking next client (after removing another)."  << endl
+        	if(clientRemoved) std::cout << "chatroomThreadFunc: Checking next client (after removing another)."  << endl;
 
         	//sprawdź czy klient jest aktywny
         	if (!clientMonitor.isClientActive(*it))

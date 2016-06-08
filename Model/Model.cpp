@@ -165,7 +165,7 @@ bool Model::newMessage(uint32_t chatRoomId, Message message)
 {
 	QueryBuilder query(&this->connection);
 
-	query.put("INSERT INTO `ttchat`.`messages` (`message_id`, `chatroom_id`, `message`, `user_ name`, `created_date`) VALUES ('", false);
+	query.put("INSERT INTO `ttchat`.`messages` (`message_id`, `chatroom_id`, `message`, `user_ name`, `creation_date`) VALUES ('", false);
 	query.put(message.id);
 	query.put("', '", false);
 	query.put(chatRoomId);
@@ -191,7 +191,7 @@ bool Model::getMessage(uint32_t chatRoomId, uint32_t messageId, Message *message
 
 	if(!message) return false;
 
-	query.put("SELECT `message_id`, `message`, `user_ name`, `created_date` FROM messages WHERE chatroom_id = ", false);
+	query.put("SELECT `message_id`, `message`, `user_ name`, `creation_date` FROM messages WHERE chatroom_id = ", false);
 	query.put(chatRoomId);
 	query.put(" AND message_id = ", false);
 	query.put(messageId);
@@ -260,7 +260,7 @@ bool Model::newChatRoom(uint32_t chatRoomId)
 {
 	QueryBuilder query(&this->connection);
 
-	query.put("INSERT INTO `ttchat`.`chatrooms` (`chatroom_id`, `last_message`, `created_date`) VALUES ('", false);
+	query.put("INSERT INTO `ttchat`.`chatrooms` (`chatroom_id`, `last_message`) VALUES ('", false);
 	query.put(chatRoomId);
 	query.put("', '0', '0')", false);
 
