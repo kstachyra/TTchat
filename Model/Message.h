@@ -21,10 +21,6 @@ public:
 	uint8_t nick[MESSAGE_NICK_LENGTH];
 	uint8_t *payload;
 	size_t payloadLength;
-
-	/* Pedalskie API dla pedalow */
-	/*void setNick(string nick);
-	string getNick(void);*/
 };
 
 #endif /* MODEL_MESSAGE_H_ */
