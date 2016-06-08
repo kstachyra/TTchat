@@ -81,7 +81,8 @@ void Chatroom::chatroomThreadFunc()
             	std::cout<< "chatroomThreadFunc: znalazłem nieaktywnego klienta, usuwam go" <<"\n";
             	sleep(4);
         		//jeśli nie, to usuń (będąc wewnątrz listy Chatroomu (parametr true)
-           		//clientMonitor.removeClient((*it)++, true); //TODO jeśli nie będzie aktywnego oczekiwania, to może się cos zjebać, toClose powinno wymusić sprawdzenie przez chatroom aktywności klienta (jakiś nowy mutex? :/)
+           		clientMonitor.removeClient((*it)++, true); //TODO jeśli nie będzie aktywnego oczekiwania, to może się cos zjebać, toClose powinno wymusić sprawdzenie przez chatroom aktywności klienta (jakiś nowy mutex? :/)
+           		sleep(2);
         	}
         	else
         	{
@@ -112,7 +113,9 @@ void Chatroom::chatroomThreadFunc()
         //odblokuj listę, żeby w trakcie manageQueueMassages był do niej dostęp na dodawanie i odejmowanie klientów
         listMutex.unlock();
 
+
         manageQueueMessages();
+
 
         //zapisujemy tu informacje o ostatnim stanie pustosci listy
         listMutex.lock();
@@ -222,7 +225,6 @@ void Chatroom::PULLMSGSManage(SLPPacket* pck, FLP_Connection_t* c)
 
 		ans.setChatroomId(chatroomId);
 		ans.setMessageID(i);
-		std::cout<<"czaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaas: "<<msg.timestamp;
 		ans.setTime(msg.timestamp);
 		ans.setNick(msg.nick);
 		ans.setMessageLength(msg.payloadLength);
@@ -277,7 +279,6 @@ void Chatroom::MSGCLIManage(SLPPacket* pck, FLP_Connection_t* c)
 
 	if (model.newMessage(chatroomId, msg)) //dodaję wiadomość do bazy
 	{
-		std::cout<<"DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD\n";
 		for (auto it = clientList.begin(); it!= clientList.end(); ++it)
 		{
 			std::cout<<"MSGCLIManage: wysyłam" <<"\n";

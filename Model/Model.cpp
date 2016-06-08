@@ -127,6 +127,8 @@ bool Model::getNumOfMessages(uint32_t chatRoomId, uint32_t* numOfMessages)
 	query.put(chatRoomId);
 
 	if(mysql_real_query(&this->connection, (const char*)query.getQuery(), (unsigned long)query.getLength())) {
+
+		MODEL_LOG("Model::getNumOfMessages: Sending query failed...\n");
 		finishWithError("Model::getNumOfMessages", &this->connection);
 		return false;
 	}
@@ -134,12 +136,14 @@ bool Model::getNumOfMessages(uint32_t chatRoomId, uint32_t* numOfMessages)
 	MYSQL_RES *result;
 
 	if((result = mysql_store_result(&this->connection)) == NULL) {
+		MODEL_LOG("Model::getNumOfMessages: Storing resuts failed...\n");
 		finishWithError("Model::getNumOfMessages", &this->connection);
 		return false;
 	}
 
 	int num_fields = mysql_num_fields(result);
 	if(num_fields != 1) {
+		MODEL_LOG("Model::getNumOfMessages: Reading number of fields failed...\n");
 		finishWithError("Model::getNumOfMessages", &this->connection);
 		return false;
 	}
@@ -147,6 +151,7 @@ bool Model::getNumOfMessages(uint32_t chatRoomId, uint32_t* numOfMessages)
 	MYSQL_ROW row;
 
 	if(!(row = mysql_fetch_row(result))) {
+		MODEL_LOG("Model::getNumOfMessages: Fetching row failed...\n");
 		finishWithError("Model::getNumOfMessages", &this->connection);
 		return false;
 	}
