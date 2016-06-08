@@ -14,6 +14,7 @@ void ClientMonitor::addClient(FLP_Connection_t * clientId, uint64_t chatroomId)
 	//wstaw do mapy klientów
 	clients[clientId] = newClient;
 
+
 	//jeśli nie ma takiego chatroomu
 	if(chatrooms.find(chatroomId) == chatrooms.end())
 	{
@@ -115,16 +116,6 @@ void ClientMonitor::changeChatroomId(FLP_Connection_t *clientId, uint64_t newCha
 	leave();
 }
 
-void ClientMonitor::addChatroom(uint64_t chatroomId)
-{
-	enter();
-	Chatroom* newChatroom = new Chatroom(chatroomId);
-	//wstaw do mapy chatroomów
-	chatrooms[chatroomId]=newChatroom;
-	leave();
-
-}
-
 void ClientMonitor::addToTransmitter(FLP_Connection_t* c, SLPPacket ans)
 {
 	enter();
@@ -177,16 +168,19 @@ bool ClientMonitor::isClientActive(FLP_Connection_t* c)
 	return true;
 }
 
+void ClientMonitor::addChatroom(uint64_t chatroomId)
+{
+	Chatroom* newChatroom = new Chatroom(chatroomId);
+	//wstaw do mapy chatroomów
+	chatrooms[chatroomId]=newChatroom;
+}
+
 void ClientMonitor::removeChatroom(uint64_t chatroomId)
 {
-	enter();
     std::cout << "removeChatroom: usuwam chatroom DELETEDELETE " << chatrooms[chatroomId]->id <<"\n";
     //zwalniamy pamięć tego chatroomu
     delete chatrooms[chatroomId];
 
     //usuwamy wpis chatroomu z mapy
     chatrooms.erase(chatroomId);
-    leave();
 }
-
-
