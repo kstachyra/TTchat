@@ -11,17 +11,31 @@ using namespace std;
 void serverListenThread(uint32_t port);
 void serverServiceThread();
 
+char *serverAddress;
+uint32_t port;
+
 int main(int argc,char* argv[])
 {
+	char *databaseAddress;
+
+	if(argc != 3) {
+		cout << "Usage: " << argv[0] << " <serverAddress> <databaseAddress>\n";
+		return 0;
+	}
+
+	databaseAddress = argv[2];
+	serverAddress = argv[1];
+
 	//połączenie z baz
-	if(!model.connect("192.168.43.181", "krystian", "tajne"))
+	std::cout << "main: Creating model..." << endl;
+	if(!model.connect(databaseAddress, "krystian", "tajne"))
 	{
 			std::cout<<"Model::connect failed.\n";
 			exit(0);
 	}
 
 	//pobierz aktualny port
-	uint32_t port;
+	std::cout << "main: Reading listening port from model..." << endl;
 	model.getPort(&port);
 
     //uruchomienie wątku nasłuchującego na nowe połączenia
@@ -53,7 +67,7 @@ void serverListenThread(uint32_t port)
     FLP_Connection_t *newConnection;
 
     FLP_Listener_t listener;
-    FLP_ListenerInit(&listener, port, "192.168.43.65");
+    FLP_ListenerInit(&listener, port, serverAddress);
 
     while(isRunning)
     {
@@ -96,11 +110,11 @@ void serverServiceThread()
 
     while(1)
     {
-    	std::cout<<"\n\n";
-    	std::cout<<"_____STATUS MONITORA_____\n";
-    	std::cout<<"klientów: " << clientMonitor.clients.size() <<"\n";
-    	std::cout<<"chatroomów: " << clientMonitor.chatrooms.size() <<"\n";
-    	std::cout<<"\n\n";
+//    	std::cout<<"\n\n";
+//    	std::cout<<"_____STATUS MONITORA_____\n";
+//    	std::cout<<"klientów: " << clientMonitor.clients.size() <<"\n";
+//    	std::cout<<"chatroomów: " << clientMonitor.chatrooms.size() <<"\n";
+//    	std::cout<<"\n\n";
     	sleep(5);
     }
 }

@@ -126,6 +126,8 @@ bool Model::getNumOfMessages(uint32_t chatRoomId, uint32_t* numOfMessages)
 	query.put("SELECT COUNT(message_id) FROM messages WHERE chatroom_id = ", false);
 	query.put(chatRoomId);
 
+	query.printInfo();
+
 	if(mysql_real_query(&this->connection, (const char*)query.getQuery(), (unsigned long)query.getLength())) {
 
 		MODEL_LOG("Model::getNumOfMessages: Sending query failed...\n");
@@ -262,10 +264,10 @@ bool Model::newChatRoom(uint32_t chatRoomId)
 
 	query.put("INSERT INTO `ttchat`.`chatrooms` (`chatroom_id`, `last_message`) VALUES ('", false);
 	query.put(chatRoomId);
-	query.put("', '0', '0')", false);
+	query.put("', '0')", false);
 
 	if(mysql_real_query(&this->connection, (const char*)query.getQuery(), (unsigned long)query.getLength())) {
-		finishWithError("Model::getNumOfMessages", &this->connection);
+		finishWithError("Model::newChatroom", &this->connection);
 		return false;
 	}
 

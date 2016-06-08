@@ -148,6 +148,7 @@ void Client::receiverThreadFunc()
             receiverMutex.unlock();
         } else {
         	std::cout << "receiverThreadFunc: FLP_Read failed." << endl;
+        	break;
         }
     }
     close();

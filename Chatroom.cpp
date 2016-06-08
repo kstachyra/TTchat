@@ -47,7 +47,10 @@ void Chatroom::removeClient(FLP_Connection_t* c)
  */
 void Chatroom::forceRemoveClient(FLP_Connection_t* c)
 {
+	std::cout << "chatroomThreadFunc: clientList size:" << clientList.size()  << endl;
+	std::cout << "Chatroom::forceRemoveClient: Removing " << c << endl;
 	clientList.remove(c);
+	std::cout << "chatroomThreadFunc: clientList size:" << clientList.size()  << endl;
 }
 
 bool Chatroom::isEmpty()
@@ -66,14 +69,25 @@ void Chatroom::chatroomThreadFunc()
 
     //tu przechowujemy informacje o tym, czy ostatnio lista byla pusta
     bool toStop=0;
-    bool clientRemoved;
+    bool clientRemoved = false;
 
     while(1)
     {
     	clientRemoved = false;
 
+    	 if(clientRemoved) std::cout << "chatroomThreadFunc: Next round..." << endl;
+
         listMutex.lock();
         //std::cout<< "chatroomThreadFunc: chatroom " << id << " ma w swojej kolejce wiadomosci " << chatroomQueue.size() <<"\n";
+
+        if(clientRemoved) {
+        	std::cout << "chatroomThreadFunc: clientList size:" << clientList.size()  << endl;
+        	if(clientList.begin() == clientList.end()) {
+        		std::cout << "chatroomThreadFunc: clientList.begin() == clientList.end()" << endl;
+        	} else {
+        		std::cout << "chatroomThreadFunc: clientList.begin() != clientList.end()" << endl;
+        	}
+        }
 
         //dla każdego klienta w rozmowie
         for (auto it = clientList.begin(); it != clientList.end(); ++it)
@@ -85,17 +99,20 @@ void Chatroom::chatroomThreadFunc()
         	{
             	std::cout<< "chatroomThreadFunc: Znalazłem nieaktywnego klienta, usuwam go." <<"\n";
         		//jeśli nie, to usuń (będąc wewnątrz listy Chatroomu (parametr true)
-           		clientMonitor.removeClient((*it)++, true); //TODO jeśli nie będzie aktywnego oczekiwania, to może się cos zjebać, toClose powinno wymusić sprawdzenie przez chatroom aktywności klienta (jakiś nowy mutex? :/)
+            	FLP_Connection_t *toRemove = *it;
+            	it++;
+           		clientMonitor.removeClient(toRemove, true); //TODO jeśli nie będzie aktywnego oczekiwania, to może się cos zjebać, toClose powinno wymusić sprawdzenie przez chatroom aktywności klienta (jakiś nowy mutex? :/)
            		std::cout << "chatroomThreadFunc: Client removed." << endl;
            		clientRemoved = true;
         	}
         	else
         	{
         		//pobierz jego wiadomości
-
+        		if(clientRemoved) std::cout << "chatroomThreadFunc: Client is active."  << endl;
 				std::queue < SLPPacket > tempQueue;
 				//std::cout << "chatroomThreadFunc: chatroom " << id << " pobiera wiadomości z receiverQueue dla klienta " << (*it)->id <<"\n";
 
+				if(clientRemoved) std::cout << "chatroomThreadFunc: Reading from receiver queue..."  << endl;
 				clientMonitor.getFromReceiver((*it), &tempQueue);
 				//clientMonitor.clients[(*it)]->getFromReceiver(&tempQueue);
 
@@ -106,6 +123,7 @@ void Chatroom::chatroomThreadFunc()
 				//sleep(1);
 
 				//dla wszystkich nowopobranych wiadomości
+				if(clientRemoved) std::cout << "chatroomThreadFunc: Pushing messages to chatroom queue..."  << endl;
 				while (!tempQueue.empty())
 				{
 					//włóż je do kolejki chatroomu z informacją, od któ©ego klienta jest to wiadomość
@@ -122,11 +140,13 @@ void Chatroom::chatroomThreadFunc()
         listMutex.unlock();
 
 
+        if(clientRemoved) std::cout << "chatroomThreadFunc: Calling manageQueueMessages..." << endl;
         manageQueueMessages();
 
 
         //zapisujemy tu informacje o ostatnim stanie pustosci listy
         listMutex.lock();
+        if(clientRemoved) std::cout << "chatroomThreadFunc: Checking if client list is empty..." << endl;
         if (clientList.empty()) toStop = 1;
         //std::cout<< "chatroomThreadFunc: watek czatroomu " << id << " ma " << clientList.size() << " klientow" <<"\n";
         listMutex.unlock();
@@ -136,6 +156,7 @@ void Chatroom::chatroomThreadFunc()
 
         //jeśli lista klientów była pusta, to kończymy pracę wątku chatroomu
         //if (toStop) break; //TODO OGARNAĆ KONIEC CHATROOMU
+        if(clientRemoved) std::cout << "chatroomThreadFunc: Done." << endl;
     }
     std::cout<< "chatroomThreadFunc: wątek chatroomu kończy pracę " << id <<"\n";
 }
@@ -169,8 +190,11 @@ void Chatroom::SUBREQManage(SLPPacket* msg, FLP_Connection_t* c)
 {
 	uint64_t newChatroomId = msg->getChatroomId();
 
+	std::cout<<"SUBREWManage: Changing chatroomId" << endl;
+
 	clientMonitor.changeChatroomId(c, newChatroomId);
 
+	std::cout<<"SUBREWManage: Sending SUBACK." << endl;
 	SLPPacket ans = SLPPacket(SLPPacket::SUBACK);
 	ans.setChatroomId(newChatroomId);
 
