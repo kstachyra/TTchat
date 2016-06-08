@@ -258,11 +258,16 @@ void Chatroom::PULLMSGSManage(SLPPacket* pck, FLP_Connection_t* c)
 	uint32_t first = pck->getFirstMessageID();
 	uint32_t last = pck->getLastMessageID();
 
-	SLPPacket ans = SLPPacket(SLPPacket::MSGSER, 80);
+	std::cout << "Chatroom::PULLMSGSManage: first=" << first << ", last=" << last << endl;
+
 	for (uint32_t i = last; i>=first; --i)
 	{
 		Message msg;
 		model.getMessage(chatroomId, i, &msg);
+
+		std::cout << "Chatroom::PULLMSGSManage: Pulling message with id=" << i << endl;
+
+		SLPPacket ans = SLPPacket(SLPPacket::MSGSER, msg.payloadLength);
 
 		ans.setChatroomId(chatroomId);
 		ans.setMessageID(i);
