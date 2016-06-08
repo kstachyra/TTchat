@@ -68,7 +68,6 @@ void Client::getFromReceiver(std::queue < SLPPacket >* tempQueue)
 
 void Client::close()
 {
-	FLP_Close(id);
 	toClose = 1;
 
 	//podnosimy semafor na empty, żeby wątek transmittera się nie zablokował
@@ -125,15 +124,15 @@ void Client::receiverThreadFunc()
 {
     size_t  length;
     uint8_t * data;
-    bool isRunning;
+    bool result;
     SLPPacket msg;
 
     while (1)
     {
         //przeczytaj wiadomość i zapisz ją do msg
-        isRunning = FLP_Read(id, &data, &length);
+        result = FLP_Read(id, &data, &length);
 
-        if (isRunning) //jeśli odczytana poprawnie
+        if (result) //jeśli odczytana poprawnie
         {
             //twórz obiekt wiadomości z bufora danych
             msg = SLPPacket(data, length);
@@ -147,8 +146,9 @@ void Client::receiverThreadFunc()
             receiverQueue.push(msg);
             //oddaj dostęp do kolejki
             receiverMutex.unlock();
+        } else {
+        	std::cout << "receiverThreadFunc: FLP_Read failed." << endl;
         }
-        else break; //isRunning == 0
     }
     close();
     std::cout<< "receiverThreadFunc: wątek receiver KOŃCZY PRACĘ dla klienta " << id <<"\n";

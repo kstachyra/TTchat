@@ -66,23 +66,28 @@ void Chatroom::chatroomThreadFunc()
 
     //tu przechowujemy informacje o tym, czy ostatnio lista byla pusta
     bool toStop=0;
+    bool clientRemoved;
 
     while(1)
     {
+    	clientRemoved = false;
+
         listMutex.lock();
         //std::cout<< "chatroomThreadFunc: chatroom " << id << " ma w swojej kolejce wiadomosci " << chatroomQueue.size() <<"\n";
 
         //dla każdego klienta w rozmowie
         for (auto it = clientList.begin(); it != clientList.end(); ++it)
         {
+        	if(clientRemoved) std::cout << "chatroomThreadFunc: Checking next client (after removing another)."  << endl
+
         	//sprawdź czy klient jest aktywny
         	if (!clientMonitor.isClientActive(*it))
         	{
-            	std::cout<< "chatroomThreadFunc: znalazłem nieaktywnego klienta, usuwam go" <<"\n";
-            	sleep(4);
+            	std::cout<< "chatroomThreadFunc: Znalazłem nieaktywnego klienta, usuwam go." <<"\n";
         		//jeśli nie, to usuń (będąc wewnątrz listy Chatroomu (parametr true)
            		clientMonitor.removeClient((*it)++, true); //TODO jeśli nie będzie aktywnego oczekiwania, to może się cos zjebać, toClose powinno wymusić sprawdzenie przez chatroom aktywności klienta (jakiś nowy mutex? :/)
-           		sleep(2);
+           		std::cout << "chatroomThreadFunc: Client removed." << endl;
+           		clientRemoved = true;
         	}
         	else
         	{
@@ -110,6 +115,9 @@ void Chatroom::chatroomThreadFunc()
 				}
         	}
         }
+
+        if(clientRemoved) std::cout << "chatroomThreadFunc: All clients checked." << endl;
+
         //odblokuj listę, żeby w trakcie manageQueueMassages był do niej dostęp na dodawanie i odejmowanie klientów
         listMutex.unlock();
 

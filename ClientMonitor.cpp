@@ -54,9 +54,12 @@ void ClientMonitor::removeClient(FLP_Connection_t * clientId, bool noMutex)
 	}
 	else
 	{
+		std::cout << "ClientMonitor.removeClient: Joining threads..." << endl;
+
 		clients[clientId]->joinThreads();
 
 		//usuń klienta z chatroomu
+		std::cout << "ClientMonitor.removeClient: Removing client..." << endl;
 		if (noMutex) chatrooms[clients[clientId]->chatroomId]->forceRemoveClient(clientId);
 		else chatrooms[clients[clientId]->chatroomId]->removeClient(clientId);
 
@@ -77,13 +80,16 @@ void ClientMonitor::removeClient(FLP_Connection_t * clientId, bool noMutex)
 
 
 
-		std::cout<<"ClientMonitor.RemoveClient: usuwam DELETEDELETE clienta " << clientId <<"\n";
+		std::cout<<"ClientMonitor.RemoveClient: Freeing memory (clientId=" << clientId <<")...\n";
 		//zwalniamy pamięć tego klienta
 		delete clients[clientId];
 
 		//usuwamy wpis klienta z mapy
+		std::cout<<"ClientMonitor.RemoveClient: Removing client from the map...\n";
 		clients.erase(clientId);
 
+		std::cout<<"ClientMonitor.RemoveClient: Closing FLP connection...\n";
+		FLP_Close(clientId);
 	}
 
 	leave();
