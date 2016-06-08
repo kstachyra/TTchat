@@ -71,6 +71,8 @@ bool Model::getLastMessageId(uint32_t chatRoomId, uint32_t* messageID)
 	query.put("SELECT MAX(message_id) FROM messages WHERE chatroom_id = ", false);
 	query.put(chatRoomId);
 
+	//query.printInfo();
+
 	MODEL_LOG("Model::getLastMessageId: Sending query to database...\n");
 	if(mysql_real_query(&this->connection, (const char*)query.getQuery(), (unsigned long)query.getLength())) {
 		finishWithError("Model::getLastMessageId", &this->connection);
@@ -126,7 +128,7 @@ bool Model::getNumOfMessages(uint32_t chatRoomId, uint32_t* numOfMessages)
 	query.put("SELECT COUNT(message_id) FROM messages WHERE chatroom_id = ", false);
 	query.put(chatRoomId);
 
-	query.printInfo();
+	//query.printInfo();
 
 	if(mysql_real_query(&this->connection, (const char*)query.getQuery(), (unsigned long)query.getLength())) {
 
@@ -198,6 +200,9 @@ bool Model::getMessage(uint32_t chatRoomId, uint32_t messageId, Message *message
 	query.put(" AND message_id = ", false);
 	query.put(messageId);
 
+	//query.printInfo();
+
+	MODEL_LOG("Model::getMessage: Sending query to database...\n");
 	if(mysql_real_query(&this->connection, (const char*)query.getQuery(), (unsigned long)query.getLength())) {
 		finishWithError("Model::getMessage", &this->connection);
 		return false;
@@ -205,6 +210,7 @@ bool Model::getMessage(uint32_t chatRoomId, uint32_t messageId, Message *message
 
 	MYSQL_RES *result;
 
+	MODEL_LOG("Model::getMessage: Storing results...\n");
 	if((result = mysql_store_result(&this->connection)) == NULL) {
 		finishWithError("Model::getMessage", &this->connection);
 		return false;
@@ -214,6 +220,7 @@ bool Model::getMessage(uint32_t chatRoomId, uint32_t messageId, Message *message
 	MYSQL_ROW row;
 	unsigned long *lengths;
 
+	MODEL_LOG("Model::getMessage: Fetching row...\n");
 	row = mysql_fetch_row(result);
 	if(!row) {
 		printf("Model::getMessage: mysql_fetch_row failed.\n");
@@ -221,12 +228,14 @@ bool Model::getMessage(uint32_t chatRoomId, uint32_t messageId, Message *message
 		return false;
 	}
 
+	MODEL_LOG("Model::getMessage: Getting number of fields...\n");
 	num_fields = mysql_num_fields(result);
 	if(num_fields != 4) {
 		printf("Model::getMessage: mysql_num_fields returned unexpected number of fields (num_fields=%u).\n", num_fields);
 		return false;
 	}
 
+	MODEL_LOG("Model::getMessage: Fetching lengths...\n");
 	lengths = mysql_fetch_lengths(result);
 
 	// Extract id
