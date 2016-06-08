@@ -21,7 +21,9 @@ public:
 private:
     //lista klientów należących do rozmowy wraz z mutexem
     list < FLP_Connection_t* > clientList;
-    std::mutex listMutex;
+    std::mutex clientListLock;
+    std::queue <FLP_Connection_t*> waitingList;
+    std::mutex waitingListLock;
 
     //kolejka wiadomości do obsłużenia przez wątek chatroomu z informacją, który klient ją umieścił
     std::queue <  std::pair < SLPPacket, FLP_Connection_t* > > chatroomQueue;

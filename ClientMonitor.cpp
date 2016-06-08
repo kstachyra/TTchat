@@ -121,6 +121,8 @@ void ClientMonitor::changeChatroomId(FLP_Connection_t *clientId, uint64_t newCha
 
 		//to tylko dodaj klienta doń
 		chatrooms[newChatroomId]->addClient(clientId);
+
+		std::cout << "ClientMonitor::changeChatroomId: Client added to chatroom." << endl;
 	}
 
 	leave();

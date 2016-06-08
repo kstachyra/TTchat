@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include "global.h"
 #include "Model/Model.h"
+#include <string>
 
 #include <chrono>
 #include <time.h>
@@ -30,16 +31,16 @@ void Chatroom::detachThread()
 
 void Chatroom::addClient(FLP_Connection_t* c)
 {
-	listMutex.lock();
-	clientList.push_back(c);
-	listMutex.unlock();
+	waitingListLock.lock();
+	waitingList.push(c);
+	waitingListLock.unlock();
 }
 
 void Chatroom::removeClient(FLP_Connection_t* c)
 {
-	listMutex.lock();
+	clientListLock.lock();
 	clientList.remove(c);
-	listMutex.unlock();
+	clientListLock.unlock();
 }
 
 /*
@@ -56,9 +57,9 @@ void Chatroom::forceRemoveClient(FLP_Connection_t* c)
 bool Chatroom::isEmpty()
 {
 	bool toReturn = false;
-	listMutex.lock();
+	clientListLock.lock();
 	if (clientList.empty()) toReturn = true;
-	listMutex.unlock();
+	clientListLock.unlock();
 	//żeby uniknąć nie odblokowania mutexa
 	return toReturn;
 }
@@ -77,7 +78,7 @@ void Chatroom::chatroomThreadFunc()
 
     	 if(clientRemoved) std::cout << "chatroomThreadFunc: Next round..." << endl;
 
-        listMutex.lock();
+    	clientListLock.lock();
         //std::cout<< "chatroomThreadFunc: chatroom " << id << " ma w swojej kolejce wiadomosci " << chatroomQueue.size() <<"\n";
 
         if(clientRemoved) {
@@ -136,8 +137,16 @@ void Chatroom::chatroomThreadFunc()
 
         if(clientRemoved) std::cout << "chatroomThreadFunc: All clients checked." << endl;
 
+        // Add waiting clients
+        waitingListLock.lock();
+        for(unsigned i=0; i<waitingList.size(); i++) {
+        	clientList.push_back(waitingList.front());
+        	waitingList.pop();
+        }
+        waitingListLock.unlock();
+
         //odblokuj listę, żeby w trakcie manageQueueMassages był do niej dostęp na dodawanie i odejmowanie klientów
-        listMutex.unlock();
+        clientListLock.unlock();
 
 
         if(clientRemoved) std::cout << "chatroomThreadFunc: Calling manageQueueMessages..." << endl;
@@ -145,11 +154,11 @@ void Chatroom::chatroomThreadFunc()
 
 
         //zapisujemy tu informacje o ostatnim stanie pustosci listy
-        listMutex.lock();
+        clientListLock.lock();
         if(clientRemoved) std::cout << "chatroomThreadFunc: Checking if client list is empty..." << endl;
         if (clientList.empty()) toStop = 1;
         //std::cout<< "chatroomThreadFunc: watek czatroomu " << id << " ma " << clientList.size() << " klientow" <<"\n";
-        listMutex.unlock();
+        clientListLock.unlock();
         //żeby uniknąć nie odblokowania mutexa
 
         //TODO co jeśli tutaj dodamy klienta?
