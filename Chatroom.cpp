@@ -4,7 +4,6 @@
 #include "Model/Model.h"
 #include <string>
 
-#include <chrono>
 #include <time.h>
 
 Chatroom::Chatroom(uint64_t id)
@@ -79,8 +78,6 @@ void Chatroom::chatroomThreadFunc()
     	 if(clientRemoved) std::cout << "chatroomThreadFunc: Next round..." << endl;
 
     	clientListLock.lock();
-        //std::cout<< "chatroomThreadFunc: chatroom " << id << " ma w swojej kolejce wiadomosci " << chatroomQueue.size() <<"\n";
-
         if(clientRemoved) {
         	std::cout << "chatroomThreadFunc: clientList size:" << clientList.size()  << endl;
         	if(clientList.begin() == clientList.end()) {
@@ -99,10 +96,10 @@ void Chatroom::chatroomThreadFunc()
         	if (!clientMonitor.isClientActive(*it))
         	{
             	std::cout<< "chatroomThreadFunc: Znalazłem nieaktywnego klienta, usuwam go." <<"\n";
-        		//jeśli nie, to usuń (będąc wewnątrz listy Chatroomu (parametr true)
+        	//jeśli nie, to usuń (będąc wewnątrz listy Chatroomu (parametr true)
             	FLP_Connection_t *toRemove = *it;
             	it++;
-           		clientMonitor.removeClient(toRemove, true); //TODO jeśli nie będzie aktywnego oczekiwania, to może się cos zjebać, toClose powinno wymusić sprawdzenie przez chatroom aktywności klienta (jakiś nowy mutex? :/)
+           		clientMonitor.removeClient(toRemove, true); //TODO przy braku aktywnego oczekiwania, wybudzać wątek czatroomu takze przy usuwaniu klientów
            		std::cout << "chatroomThreadFunc: Client removed." << endl;
            		clientRemoved = true;
         	}
@@ -117,11 +114,7 @@ void Chatroom::chatroomThreadFunc()
 				clientMonitor.getFromReceiver((*it), &tempQueue);
 				//clientMonitor.clients[(*it)]->getFromReceiver(&tempQueue);
 
-				//TODO dać empty na receiver queue i wywalić wtedy sleepa
-				//ale nie może się wątek chatroomu zablokować na jednym tylko z klientów - dać nowy wątek dla każdego klienta dla chatroomu?
-				//dać jakieś sprawdzanie wspólne wszystkich semaforów
-				//po sprawdzeniu wszystkich klientów chatroom może się zawiesić na swoim semaforze, a każdy z klientów może go obudzić -> NAJLEPSZY POMYSŁ CHYBA
-				//sleep(1);
+				//TODO usunąć aktywne oczekiwanie!
 
 				//dla wszystkich nowopobranych wiadomości
 				if(clientRemoved) std::cout << "chatroomThreadFunc: Pushing messages to chatroom queue..."  << endl;
