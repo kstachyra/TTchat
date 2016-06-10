@@ -8,7 +8,6 @@ Client::Client(FLP_Connection_t* con, uint64_t chatId) : transmitterEmpty(0), re
 
 void Client::setChatroomId(uint64_t chatId)
 {
-	//używając tego, pamiętać o zmianie klienta w chatroomach!
 	chatroomId = chatId;
 }
 

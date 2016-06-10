@@ -1,12 +1,10 @@
 #ifndef TTCHAT_MESSAGE_H
 #define TTCHAT_MESSAGE_H
 
-//TODO W SLPPacket dac Model/Message
-
 #include <vector>
 #include <string>
 
-/* długość niku */
+/* długość nicku */
 #define NICK_LENGTH 32
 
 /*
@@ -134,13 +132,13 @@ public:
 private:
     /*
      * konwertuje zakres bajtów z vectora to inta i go zwraca
-     * (WAŻNE - int to 4 bajty, brak kontroli tego)
+     * 
      */
     int toInt(int first, int last);
 
     /*
      * konwertuje inta na bajty i zapisuje je w podany zakres
-     * (WAŻNE - int to 4 bajty, brak kontroli tego)
+     * 
      */
     void intToVec(uint64_t value, int first, int last);
 

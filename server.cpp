@@ -26,7 +26,7 @@ int main(int argc,char* argv[])
 	databaseAddress = argv[2];
 	serverAddress = argv[1];
 
-	//połączenie z baz
+	//połączenie z bazą
 	std::cout << "main: Creating model..." << endl;
 	if(!model.connect(databaseAddress, "krystian", "tajne"))
 	{
@@ -92,11 +92,10 @@ void serverListenThread(uint32_t port)
         else
         {
         	std::cout<< "serverListenThread: nowe połączenie" <<"\n";
-			//jeśli istnieje już
+		//jeśli istnieje już
         	if (clientMonitor.clients.find(newConnection) != clientMonitor.clients.end())
 			{
 				std::cout<< "serverListenThread: klient próbujący nawiązać połączenie na port nasłuchujący już istnieje w mapie" <<"\n";
-				//clientMonitor.removeClient(newConnection);
 			}
 
 			//jeśli podany klucz newConnection nie istnieje w mapie
