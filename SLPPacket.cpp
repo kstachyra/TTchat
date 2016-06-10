@@ -206,7 +206,7 @@ string SLPPacket::getNick()
 	{
 		return toString(6, 37);
 	}
-	std::cout<< "SLPPacket: błędny typ Message dla getNick" <<"\n";
+//	std::cout<< "SLPPacket: błędny typ Message dla getNick" <<"\n";
 	return NULL;
 }
 
@@ -228,7 +228,7 @@ void SLPPacket::getNick(uint8_t* nick)
 			nick[i] = vec[6+i];
 		}
 	}
-	std::cout<< "SLPPacket: błędny typ Message dla getNick" <<"\n";
+//	std::cout<< "SLPPacket: błędny typ Message dla getNick" <<"\n";
 }
 
 void SLPPacket::setNick(string nick)
@@ -322,7 +322,7 @@ void SLPPacket::getMessage(uint8_t* msg, size_t length)
 			msg[i] = vec[40+i];
 		}
 	}
-	std::cout<< "SLPPacket: błędny typ Message dla getNick" <<"\n";
+	std::cout<< "SLPPacket: błędny typ Message dla getMessage" <<"\n";
 }
 
 void SLPPacket::setMessage(string msg)

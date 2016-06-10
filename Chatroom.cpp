@@ -245,6 +245,8 @@ void Chatroom::GETINFManage(SLPPacket* msg, FLP_Connection_t* c)
 	ans.setLastMessageID(lastId);
 	ans.setNumberOFMessages(numMsgs);
 
+	std::cout << "Chatroom::GETINFManage: lastMessageId=" << lastId << ", numMsgs=" << numMsgs << endl;
+
 	clientMonitor.addToTransmitter(c, ans);
 	//clientMonitor.clients[c]->addToTransmitter(ans);
 }

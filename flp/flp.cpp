@@ -540,8 +540,8 @@ static bool FLP_TransmitHeader(FLP_Connection_t *connection, uint16_t type, size
 
 	FLP_LOG("FLP_TransmitHeader: Transmitting header of type: %d (0x%x). Packet length: %d (0x%x).\n", type, type, length, length);
 
-	header.type = type;
-	header.payloadLength = length;
+	header.type = htons(type);
+	header.payloadLength = htons(length);
 
 	return FLP_Transmit(connection, (uint8_t*)&header, sizeof(FLP_Header_t));
 }
@@ -619,7 +619,21 @@ static bool FLP_Receive(FLP_Connection_t *connection, uint8_t *data, size_t leng
 
 static bool FLP_ReceiveHeader(FLP_Connection_t *connection, FLP_Header_t *header)
 {
-	return FLP_Receive(connection, (uint8_t*)header, sizeof(FLP_Header_t));
+	uint8_t buffer[sizeof(FLP_Header_t)];
+	uint16_t *type;
+	uint16_t *payloadLength;
+	bool result;
+
+	result = FLP_Receive(connection, (uint8_t*)buffer, sizeof(FLP_Header_t));
+	if(!result) return false;
+
+	type = (uint16_t*)buffer;
+	payloadLength = (uint16_t*)(buffer + sizeof(uint16_t));
+
+	header->type = ntohs(*type);
+	header->payloadLength = ntohs(*payloadLength);
+
+	return true;
 }
 
 static bool FLP_Handshake(FLP_Connection_t *connection)

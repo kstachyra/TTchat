@@ -65,9 +65,12 @@ void serverListenThread(uint32_t port)
 
     bool isRunning = true;
     FLP_Connection_t *newConnection;
+    uint32_t currentPort, newPort;
+
+    currentPort = port;
 
     FLP_Listener_t listener;
-    FLP_ListenerInit(&listener, port, serverAddress);
+    FLP_ListenerInit(&listener, currentPort, serverAddress);
 
     while(isRunning)
     {
@@ -77,7 +80,14 @@ void serverListenThread(uint32_t port)
         {
         	std::cout<< "serverListenThread: timeout, FLP_Listen zwraca true" <<"\n";
         	//aktualizuj port nasłuchujący
-        	model.getPort(&port);
+        	model.getPort(&newPort);
+
+        	if(currentPort != newPort) {
+        		std::cout<< "serverListenThread: Changing port to " << newPort <<"\n";
+        		FLP_ListenerDeinit(&listener);
+        		FLP_ListenerInit(&listener, currentPort, serverAddress);
+        		currentPort = newPort;
+        	}
         }
         else
         {
